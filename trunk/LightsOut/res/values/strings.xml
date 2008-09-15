@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="new_game">New Game</string>
+    <string name="app_name">Lights Out</string>
+    <string name="time">Time</string>
+    <string name="moves">Moves</string>
+    <string name="total_time">Total time</string>
+    <string name="total_moves">Total moves</string>
+    <string name="level_time">Level time</string>
+    <string name="level_moves">Level moves</string>
+    <string name="level_passed">Level %n passed!</string>
+    <string name="next_level">On to level %n!</string>
+</resources>
