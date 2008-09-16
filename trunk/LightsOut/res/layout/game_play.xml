@@ -4,35 +4,47 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
   
-  <LinearLayout
+  <TableLayout
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal" >
-    <TextView
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:orientation="horizontal"
-		    android:gravity="left"
-		    android:paddingLeft="10px"
-		    android:background="#ff000000"
-		    android:textColor="#ffffffff"
-		    android:lines="1"
-		    android:text="Time: %s"
-		    android:id="@+id/time_header">
-	  </TextView>
-	  <TextView
-		    android:layout_width="fill_parent"
-		    android:layout_height="wrap_content"
-		    android:orientation="horizontal"
-		    android:gravity="right"
-		    android:paddingRight="10px"
-		    android:background="#ff000000"
-		    android:textColor="#ffffffff"
-		    android:lines="1"
-		    android:text="Moves %s"
-		    android:id="@+id/moves_header">
-		</TextView>
-  </LinearLayout>
+    android:stretchColumns="*">
+    <TableRow>
+	    <TextView
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:orientation="horizontal"
+			    android:gravity="left"
+			    android:paddingLeft="10px"
+			    android:background="#ff000000"
+			    android:textColor="#ffffffff"
+			    android:lines="1"
+			    android:text="Time: %s"
+			    android:id="@+id/time_header">
+		  </TextView>
+		  <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:orientation="horizontal"
+	        android:gravity="center"
+	        android:background="#ff000000"
+	        android:textColor="#ffffffff"
+	        android:lines="1"
+	        android:id="@+id/level_header">
+	    </TextView>
+		  <TextView
+			    android:layout_width="fill_parent"
+			    android:layout_height="wrap_content"
+			    android:orientation="horizontal"
+			    android:gravity="right"
+			    android:paddingRight="10px"
+			    android:background="#ff000000"
+			    android:textColor="#ffffffff"
+			    android:lines="1"
+			    android:text="Moves %s"
+			    android:id="@+id/moves_header">
+			</TextView>
+		</TableRow>
+  </TableLayout>
 	<TableLayout
 	    android:stretchColumns="*"
 	    android:layout_width="fill_parent"
