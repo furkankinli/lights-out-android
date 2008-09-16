@@ -13,6 +13,8 @@ import android.widget.Button;
 
 public class GameMenu extends Activity {
   
+  private static final int GAME_PLAY = 0;
+  
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -29,6 +31,7 @@ public class GameMenu extends Activity {
       newGameButton.setOnClickListener(new View.OnClickListener() {
         public void onClick(View v) {
           Intent intent = new Intent(a, GamePlay.class);
+          intent.putExtra(GamePlay.NEW_GAME, true);
           startActivity(intent);
         }
       });
@@ -38,13 +41,22 @@ public class GameMenu extends Activity {
         continueGameButton.setOnClickListener(new View.OnClickListener() {
           public void onClick(View v) {
             Intent intent = new Intent(a, GamePlay.class);
-            intent.putExtra(GamePlay.CONTINUE_GAME, true);
-            startActivity(intent);
+            startActivityForResult(intent, GAME_PLAY);
           }
         });
       }
       
       
+  }
+  
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+    super.onActivityResult(requestCode, resultCode, intent);
+    if (requestCode == GAME_PLAY) {
+      Bundle extras = intent.getExtras();
+      int totalMoves = extras.getInt(GamePlay.TOTAL_MOVES);
+      int totalSeconds = extras.getInt(GamePlay.TOTAL_TIME);
+    }
   }
   
   private boolean doesSavedGameExist() {
