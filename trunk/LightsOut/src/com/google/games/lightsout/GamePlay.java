@@ -15,6 +15,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.DialogInterface.OnDismissListener;
 import android.os.Bundle;
 import android.view.View;
@@ -28,7 +29,9 @@ public class GamePlay extends Activity {
   
   public static final String SAVE_FILE_NAME = "gameplay";
   
-  public static final String CONTINUE_GAME = "com.google.game.lightsout.ContinueGame";
+  public static final String NEW_GAME = "com.google.game.lightsout.ContinueGame";
+  public static final String TOTAL_TIME = "com.google.game.lightsout.TotalTime";
+  public static final String TOTAL_MOVES = "com.google.game.lightsout.TotalMoves";
   
   private GameBoard gameBoard;
   
@@ -57,7 +60,8 @@ public class GamePlay extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
-    if (getIntent().getExtras() != null && getIntent().getExtras().getBoolean(CONTINUE_GAME)) {
+    boolean isNewGame = false;
+    if (getIntent().getExtras() == null || !getIntent().getExtras().getBoolean(NEW_GAME)) {
       try {
         BufferedReader reader = new BufferedReader(new InputStreamReader(this.openFileInput(SAVE_FILE_NAME)));
         StringBuffer buffer = new StringBuffer();
@@ -72,16 +76,15 @@ public class GamePlay extends Activity {
         playLevel(gameBoard.getLevel());
         this.gameBoard.startTimer();
         
-      } catch (FileNotFoundException e) {
-        e.printStackTrace();
       } catch (IOException e) {
-        
+        isNewGame = true;
       }
-    } else {
+    }
+    
+    if (isNewGame) {
       this.gameBoard = new GameBoard(this);
       this.gameBoard.setLevel(0);
     }
-    
   }
   
   public void playLevel(int level) {
@@ -132,6 +135,10 @@ public class GamePlay extends Activity {
         if (level < 9) {
           gameBoard.setLevel(level + 1);
         } else {
+          Intent intent = new Intent();
+          intent.putExtra(TOTAL_TIME, gameBoard.getTotalSeconds());
+          intent.putExtra(TOTAL_MOVES, gameBoard.getTotalMoves());
+          setResult(RESULT_OK, intent);
           finish();
         }
         winDialog.dismiss();
