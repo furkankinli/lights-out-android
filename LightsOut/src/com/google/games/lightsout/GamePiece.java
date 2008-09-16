@@ -15,12 +15,14 @@ public class GamePiece extends Button {
   private boolean isLightOn, isTouchDown; 
   
   public GamePiece(Context context, GameBoard gameBoard) {
+    this(context, gameBoard, false);
+  }
+  
+  public GamePiece(Context context, GameBoard gameBoard, boolean isLightOn) {
     super(context);
     this.gameBoard = gameBoard;
-    this.isLightOn = true;
+    this.isLightOn = isLightOn;
     this.isTouchDown = false;
-    
-    gameBoard.registerGamePiece(this);
   }
   
   @Override

@@ -1,8 +1,19 @@
 package com.google.games.lightsout;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.os.Bundle;
@@ -15,36 +26,83 @@ import android.widget.TextView;
 
 public class GamePlay extends Activity {
   
+  public static final String SAVE_FILE_NAME = "gameplay";
+  
+  public static final String CONTINUE_GAME = "com.google.game.lightsout.ContinueGame";
+  
   private GameBoard gameBoard;
-
-  public GamePlay() {
-    this.gameBoard = new GameBoard(this);
-  }
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
+
     setContentView(R.layout.game_play);
+  }
+  
+  @Override
+  protected void onPause() {
+    super.onPause();
     
-    playLevel(0);
+    try {
+      DataOutputStream os = new DataOutputStream(this.openFileOutput(SAVE_FILE_NAME, MODE_PRIVATE));
+      os.writeBytes(GameBoardSerializer.serialize(gameBoard));
+      os.close();
+    } catch (FileNotFoundException e) {
+       e.printStackTrace();
+    } catch (IOException e) {
+      
+    }
+  }
+  
+  @Override
+  protected void onResume() {
+    super.onResume();
+    if (getIntent().getExtras() != null && getIntent().getExtras().getBoolean(CONTINUE_GAME)) {
+      try {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(this.openFileInput(SAVE_FILE_NAME)));
+        StringBuffer buffer = new StringBuffer();
+        String line;
+        while ((line = reader.readLine()) != null) {
+          buffer.append(line);
+          buffer.append("\n");
+        }
+        reader.close();
+        
+        this.gameBoard = GameBoardSerializer.deserialize(this, buffer.toString());
+        playLevel(gameBoard.getLevel());
+        this.gameBoard.startTimer();
+        
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+      } catch (IOException e) {
+        
+      }
+    } else {
+      this.gameBoard = new GameBoard(this);
+      this.gameBoard.setLevel(0);
+    }
     
   }
   
   public void playLevel(int level) {
-    int size = this.gameBoard.setLevel(level);
+    int size = this.gameBoard.getSize();
+    
+    TextView textView = (TextView) findViewById(R.id.level_header);
+    textView.setText(getString(R.string.level) + ": " + (level + 1));
     
     TableLayout table = (TableLayout) findViewById(R.id.table);
     table.removeAllViews();
     
-    updateMoveCount(0);
-    updateSeconds(0);
+    updateMoveCount(gameBoard.getLevelMoves());
+    updateSeconds(gameBoard.getLevelSeconds());
     
     for (int i = 0; i < size; i++) {
       TableRow row = new TableRow(this);
       for (int j = 0; j < size; j++) {
-        GamePiece piece = new GamePiece(this, this.gameBoard);
-        row.addView(piece);
+        //GamePiece piece = new GamePiece(this, this.gameBoard);
+        GamePiece gamePiece = gameBoard.getGamePieceByIndex(i * size + j);
+        
+        row.addView(gamePiece);
       }
       table.addView(row);
     }
@@ -63,12 +121,19 @@ public class GamePlay extends Activity {
         getString(R.string.total_moves) + ": " + this.gameBoard.getTotalMoves() + "\n");
     
     Button button = (Button) winDialog.findViewById(R.id.dialog_button);
-    button.setText(getString(R.string.next_level).replaceFirst("%n", (level + 2) + ""));
+    if (level < 9) {
+      button.setText(getString(R.string.next_level).replaceFirst("%n", (level + 2) + ""));
+    } else {
+      button.setText(R.string.game_over);
+    }
     
-    final GamePlay self = this;
     button.setOnClickListener(new OnClickListener() {
       public void onClick(View v) {
-        self.playLevel(level + 1);
+        if (level < 9) {
+          gameBoard.setLevel(level + 1);
+        } else {
+          finish();
+        }
         winDialog.dismiss();
       }
     });
