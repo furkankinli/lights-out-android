@@ -5,9 +5,11 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
-import android.widget.TableLayout;
+import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
@@ -17,34 +19,37 @@ public class GamePlay extends Activity {
   public static final String TOTAL_TIME = "com.google.game.lightsout.TotalTime";
   public static final String TOTAL_MOVES = "com.google.game.lightsout.TotalMoves";
   
-  private GameBoard gameBoard;
+  private GameBoard gameBoard = null;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.game_play);
+    
+    if (getIntent().getExtras() != null && getIntent().getExtras().getBoolean(NEW_GAME)
+        && savedInstanceState == null) {
+      this.gameBoard = new GameBoard(this);
+    }
+    
   }
   
   @Override
   protected void onPause() {
     super.onPause();
     
+    gameBoard.stopTimer();
     GameBoardSerializer.serialize(this, gameBoard);
   }
   
   @Override
   protected void onResume() {
     super.onResume();
-    boolean isNewGame = false;
-    if (getIntent().getExtras() == null || !getIntent().getExtras().getBoolean(NEW_GAME)) {
+
+    if (gameBoard == null) {
       this.gameBoard = GameBoardSerializer.deserialize(this);
-      playLevel(gameBoard.getLevel());
-      this.gameBoard.startTimer();
-    } else {
-      this.gameBoard = new GameBoard(this);
-      this.gameBoard.setLevel(0);
     }
+    this.gameBoard.setLevel(gameBoard.getLevel());
   }
   
   public void playLevel(int level) {
@@ -53,21 +58,21 @@ public class GamePlay extends Activity {
     TextView textView = (TextView) findViewById(R.id.level_header);
     textView.setText(getString(R.string.level) + ": " + (level + 1));
     
-    TableLayout table = (TableLayout) findViewById(R.id.table);
-    table.removeAllViews();
+    LinearLayout boardHolder = (LinearLayout) findViewById(R.id.board_holder);
+    boardHolder.removeAllViews();
+    
+    GameBoardLayout gameBoardLayout = new GameBoardLayout(this, size);
+    gameBoardLayout.setLayoutParams(
+        new ViewGroup.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+   
+    boardHolder.addView(gameBoardLayout);
     
     updateMoveCount(gameBoard.getLevelMoves());
     updateSeconds(gameBoard.getLevelSeconds());
     
-    for (int i = 0; i < size; i++) {
-      TableRow row = new TableRow(this);
-      for (int j = 0; j < size; j++) {
-        //GamePiece piece = new GamePiece(this, this.gameBoard);
-        GamePiece gamePiece = gameBoard.getGamePieceByIndex(i * size + j);
-        
-        row.addView(gamePiece);
-      }
-      table.addView(row);
+    for (int i = 0; i < size * size; i++) {
+      GamePiece gamePiece = gameBoard.getGamePieceByIndex(i);
+      gameBoardLayout.addView(gamePiece);
     }
   }
   
@@ -76,12 +81,19 @@ public class GamePlay extends Activity {
     winDialog.setContentView(R.layout.win_dialog);
     winDialog.setTitle(getString(R.string.level_passed).replaceFirst("%n", (level + 1) +""));
     
-    TextView textView = (TextView) winDialog.findViewById(R.id.dialog_text);
-    textView.setText(
-        getString(R.string.level_time) + ": " + this.gameBoard.getLevelSeconds() + "\n"  +
-        getString(R.string.level_moves) + ": " + this.gameBoard.getLevelMoves() + "\n" +
-        getString(R.string.total_time) + ": " + this.gameBoard.getTotalSeconds() + "\n" +
-        getString(R.string.total_moves) + ": " + this.gameBoard.getTotalMoves() + "\n");
+    TextView levelTimeTextView = (TextView) winDialog.findViewById(R.id.level_time_text);
+    TextView levelMovesTextView = (TextView) winDialog.findViewById(R.id.level_moves_text);
+    TextView totalTimeTextView = (TextView) winDialog.findViewById(R.id.total_time_text);
+    TextView totalMovesTextView = (TextView) winDialog.findViewById(R.id.total_moves_text);
+    levelTimeTextView.setText(this.gameBoard.getLevelSeconds() + "");
+    levelMovesTextView.setText(this.gameBoard.getLevelMoves() + "");
+    totalTimeTextView.setText(this.gameBoard.getTotalSeconds() + "");
+    totalMovesTextView.setText(this.gameBoard.getTotalMoves() + "");
+//    textView.setText(
+//        getString(R.string.level_time) + ": " + this.gameBoard.getLevelSeconds() + "\n"  +
+//        getString(R.string.level_moves) + ": " + this.gameBoard.getLevelMoves() + "\n" +
+//        getString(R.string.total_time) + ": " + this.gameBoard.getTotalSeconds() + "\n" +
+//        getString(R.string.total_moves) + ": " + this.gameBoard.getTotalMoves() + "\n");
     
     Button button = (Button) winDialog.findViewById(R.id.dialog_button);
     if (level < 9) {
@@ -96,8 +108,10 @@ public class GamePlay extends Activity {
           gameBoard.setLevel(level + 1);
         } else {
           Intent intent = new Intent();
-          intent.putExtra(TOTAL_TIME, gameBoard.getTotalSeconds());
-          intent.putExtra(TOTAL_MOVES, gameBoard.getTotalMoves());
+          Bundle bundle = new Bundle();
+          bundle.putInt(TOTAL_TIME, gameBoard.getTotalSeconds());
+          bundle.putInt(TOTAL_MOVES, gameBoard.getTotalMoves());
+          intent.putExtras(bundle);
           setResult(RESULT_OK, intent);
           finish();
         }

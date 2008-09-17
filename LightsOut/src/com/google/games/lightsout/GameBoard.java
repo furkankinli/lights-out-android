@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.SystemClock;
 
@@ -19,11 +20,14 @@ public class GameBoard {
   private HashMap<GamePiece, Integer> pieceToIndexMap;
   private GamePlay gamePlay;
   
+  public HashMap<String, Bitmap> pieceBitmapMap; 
+  
   private final Handler handler = new Handler();
   
   public GameBoard(GamePlay gamePlay) {
     this.gamePlay = gamePlay;
     this.setProperties(new LinkedList<GamePiece>(), 0, 0, 0, 0, 5, 0);
+    pieceBitmapMap = new HashMap<String, Bitmap>();
   }
   
   public void setProperties(LinkedList<GamePiece> pieceList, int totalSeconds,
@@ -45,8 +49,6 @@ public class GameBoard {
   
   public void setLevel(int level) {
     this.level = level;
-    this.pieceList = new LinkedList<GamePiece>();
-    this.pieceToIndexMap = new HashMap<GamePiece, Integer>();
     
     this.levelSeconds = 0;
     this.levelMoves = 0;
@@ -60,15 +62,18 @@ public class GameBoard {
       this.size = 7;
     }
     
-    for (int i = 0; i < size * size; i++) {
-      GamePiece gamePiece = new GamePiece(gamePlay, this);
-      this.pieceList.add(gamePiece);
-      this.pieceToIndexMap.put(gamePiece, i);
-    }
-    
-    Random random = new Random();
-    for (int i = 0; i < 2 * (level + 1) + 1; i++) {
-      doTogglePiece(pieceList.get(random.nextInt(size * size)));
+    if (pieceList.size() == 0) {
+      this.pieceBitmapMap.clear();
+      for (int i = 0; i < size * size; i++) {
+        GamePiece gamePiece = new GamePiece(gamePlay, this);
+        this.pieceList.add(gamePiece);
+        this.pieceToIndexMap.put(gamePiece, i);
+      }
+      
+      Random random = new Random();
+      for (int i = 0; i < 2 * (level + 1) + 1; i++) {
+        doTogglePiece(pieceList.get(random.nextInt(size * size)));
+      }
     }
     
     gamePlay.playLevel(level);
@@ -98,7 +103,7 @@ public class GameBoard {
     }).start();
   }
   
-  private void stopTimer() {
+  public void stopTimer() {
     isTimerActive = false;
   }
   
@@ -112,6 +117,7 @@ public class GameBoard {
       stopTimer();
       totalMoves = totalMoves + levelMoves;
       totalSeconds = totalSeconds + levelSeconds;
+      this.pieceList.clear();
       
       this.gamePlay.levelWon(this.level);
     }

@@ -70,16 +70,6 @@
       android:paddingTop="15dp"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content">
-    <Button android:id="@+id/options" 
-        android:text="@string/options"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content" /> 
-  </LinearLayout>
-  <LinearLayout
-      android:orientation="horizontal"
-      android:paddingTop="15dp"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content">
     <Button android:id="@+id/high_scores" 
         android:text="@string/high_scores"
         android:layout_width="150dp"

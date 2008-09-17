@@ -3,7 +3,8 @@
     <string name="new_game">New Game</string>
     <string name="continue_game">Continue Game</string>
     <string name="options">Options</string>
-    <string name="high_scores">High scores</string>
+    <string name="high_scores">High Scores</string>
+    <string name="new_high_score">New High Score!</string>
     <string name="app_name">Lights Out</string>
     <string name="time">Time</string>
     <string name="moves">Moves</string>
@@ -15,4 +16,6 @@
     <string name="level_passed">Level %n passed!</string>
     <string name="next_level">On to level %n!</string>
     <string name="game_over">Game over</string>
+    <string name="ok">OK</string>
+    <string name="enter_your_name">Enter your name:</string>
 </resources>
