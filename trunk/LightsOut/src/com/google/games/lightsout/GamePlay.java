@@ -1,22 +1,8 @@
 package com.google.games.lightsout;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.DialogInterface.OnDismissListener;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,8 +12,6 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 public class GamePlay extends Activity {
-  
-  public static final String SAVE_FILE_NAME = "gameplay";
   
   public static final String NEW_GAME = "com.google.game.lightsout.ContinueGame";
   public static final String TOTAL_TIME = "com.google.game.lightsout.TotalTime";
@@ -46,15 +30,7 @@ public class GamePlay extends Activity {
   protected void onPause() {
     super.onPause();
     
-    try {
-      DataOutputStream os = new DataOutputStream(this.openFileOutput(SAVE_FILE_NAME, MODE_PRIVATE));
-      os.writeBytes(GameBoardSerializer.serialize(gameBoard));
-      os.close();
-    } catch (FileNotFoundException e) {
-       e.printStackTrace();
-    } catch (IOException e) {
-      
-    }
+    GameBoardSerializer.serialize(this, gameBoard);
   }
   
   @Override
@@ -62,26 +38,10 @@ public class GamePlay extends Activity {
     super.onResume();
     boolean isNewGame = false;
     if (getIntent().getExtras() == null || !getIntent().getExtras().getBoolean(NEW_GAME)) {
-      try {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(this.openFileInput(SAVE_FILE_NAME)));
-        StringBuffer buffer = new StringBuffer();
-        String line;
-        while ((line = reader.readLine()) != null) {
-          buffer.append(line);
-          buffer.append("\n");
-        }
-        reader.close();
-        
-        this.gameBoard = GameBoardSerializer.deserialize(this, buffer.toString());
-        playLevel(gameBoard.getLevel());
-        this.gameBoard.startTimer();
-        
-      } catch (IOException e) {
-        isNewGame = true;
-      }
-    }
-    
-    if (isNewGame) {
+      this.gameBoard = GameBoardSerializer.deserialize(this);
+      playLevel(gameBoard.getLevel());
+      this.gameBoard.startTimer();
+    } else {
       this.gameBoard = new GameBoard(this);
       this.gameBoard.setLevel(0);
     }
