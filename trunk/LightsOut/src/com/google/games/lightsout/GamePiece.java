@@ -4,15 +4,18 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.widget.Button;
+import android.widget.TableLayout;
 
 public class GamePiece extends Button {
+  private static final int PADDING = 3; 
 
   private GameBoard gameBoard;
-  private boolean isLightOn, isTouchDown; 
+  private boolean isLightOn, isTouchDown;
   
   public GamePiece(Context context, GameBoard gameBoard) {
     this(context, gameBoard, false);
@@ -27,34 +30,38 @@ public class GamePiece extends Button {
   
   @Override
   protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    
-    setMeasuredDimension(320 / gameBoard.getSize(), 320 / gameBoard.getSize());
+    setMeasuredDimension(0, 0);
   }
-
+  
   @Override
   protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
     canvas.drawRect(new Rect(0, 0, getWidth(), getHeight()), new Paint());
     
     if (this.isTouchDown) {
-      drawImage(canvas, R.drawable.red_block, new Rect(0, 0, getWidth(), getHeight()));
+      drawImage(canvas, R.drawable.red_block, 0);
     }
     
     if (isLightOn) {
-      drawImage(canvas, R.drawable.lights_on, new Rect(3, 3, getWidth() - 3, getHeight() - 3));
+      drawImage(canvas, R.drawable.lights_on, PADDING);
     } else {
-      drawImage(canvas, R.drawable.lights_off, new Rect(3, 3, getWidth() - 3, getHeight() - 3));
+      drawImage(canvas, R.drawable.lights_off, PADDING);
     }
   }
   
-  private void drawImage(Canvas canvas, int imageId, Rect location) {
-    int width = location.right - location.left;
-    int height = location.bottom - location.top;
+  private void drawImage(Canvas canvas, int imageId, int padding) {
+    int edgeSize = getWidth() - padding * 2;
     
-    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), imageId);
-    bitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
-    canvas.drawBitmap(bitmap, location.left, location.top, null);
+    String key = edgeSize + "," + imageId;
+    
+    Bitmap bitmap = this.gameBoard.pieceBitmapMap.get(key);
+    if (bitmap == null) {
+      bitmap = BitmapFactory.decodeResource(getResources(), imageId);
+      bitmap = Bitmap.createScaledBitmap(bitmap, edgeSize, edgeSize, true);
+      this.gameBoard.pieceBitmapMap.put(key, bitmap);
+    }
+    
+    canvas.drawBitmap(bitmap, padding, padding, null);
   }
   
   @Override

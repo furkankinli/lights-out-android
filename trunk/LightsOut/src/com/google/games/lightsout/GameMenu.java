@@ -2,9 +2,11 @@ package com.google.games.lightsout;
 
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 
 import java.io.FileInputStream;
@@ -14,12 +16,14 @@ public class GameMenu extends Activity {
   
   private static final int GAME_PLAY = 0;
   
+  private HighScoreManager highScoreManager;
+  
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
-
       
+      highScoreManager = new HighScoreManager(this);
       
       setContentView(R.layout.game_menu);
       
@@ -31,7 +35,7 @@ public class GameMenu extends Activity {
         public void onClick(View v) {
           Intent intent = new Intent(a, GamePlay.class);
           intent.putExtra(GamePlay.NEW_GAME, true);
-          startActivity(intent);
+          startActivityForResult(intent, GAME_PLAY);
         }
       });
       
@@ -53,8 +57,21 @@ public class GameMenu extends Activity {
     super.onActivityResult(requestCode, resultCode, intent);
     if (requestCode == GAME_PLAY) {
       Bundle extras = intent.getExtras();
-      int totalMoves = extras.getInt(GamePlay.TOTAL_MOVES);
       int totalSeconds = extras.getInt(GamePlay.TOTAL_TIME);
+      int totalMoves = extras.getInt(GamePlay.TOTAL_MOVES);
+      if (highScoreManager.isHighScore(totalSeconds, totalMoves)) {
+        final Dialog namePromptDialog = new Dialog(this);
+        namePromptDialog.setContentView(R.layout.name_prompt_dialog);
+        namePromptDialog.setTitle(R.string.new_high_score);
+        Button button = (Button) namePromptDialog.findViewById(R.id.ok);
+        button.setOnClickListener(new OnClickListener() {
+          public void onClick(View v) {
+            namePromptDialog.dismiss();
+          }
+        });
+        
+        namePromptDialog.show();
+      }
     }
   }
   
