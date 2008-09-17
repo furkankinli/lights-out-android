@@ -1,10 +1,16 @@
 package com.google.games.lightsout;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 
 public class GameBoardSerializer {
+  
+  public static final String SAVE_FILE_NAME = "gameplay";
 
-  public static String serialize(GameBoard gameBoard) {
+  public static void serialize(GamePlay gamePlay, GameBoard gameBoard) {
     StringBuffer pieceListStringBuffer = new StringBuffer();
     for(GamePiece gamePiece : gameBoard.getPieceList()) {
       pieceListStringBuffer.append(gamePiece.isLightOn() ? "1" : "0");
@@ -23,16 +29,41 @@ public class GameBoardSerializer {
     buffer.append("level=" + gameBoard.getLevel() + "\n");
     buffer.append("pieceList=" + pieceListStringBuffer.toString() + "\n");
     
-    return buffer.toString();
+    
+    try {
+      DataOutputStream os = new DataOutputStream(gamePlay.openFileOutput(SAVE_FILE_NAME, GamePlay.MODE_PRIVATE));
+      os.writeBytes(buffer.toString());
+      os.close();
+    } catch (IOException e) {
+      // Do nothing, fail silently
+      // TODO: inform user that save failed.
+    }
   }
   
-  public static GameBoard deserialize(GamePlay gamePlay, String s) {
-    String[] lineArray = s.split("\n");
+  public static GameBoard deserialize(GamePlay gamePlay) {
+    GameBoard gameBoard = new GameBoard(gamePlay);
+    String fileContents;
+    
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(gamePlay.openFileInput(SAVE_FILE_NAME)));
+      StringBuffer buffer = new StringBuffer();
+      String line;
+      while ((line = reader.readLine()) != null) {
+        buffer.append(line);
+        buffer.append("\n");
+      }
+      reader.close();
+      fileContents = buffer.toString();
+    } catch (IOException e) {
+      return gameBoard;
+    }
+    
+    
+    String[] lineArray = fileContents.split("\n");
     int size = 5, level = 0, totalSeconds = 0, totalMoves = 0, 
         levelSeconds = 0, levelMoves = 0;
     LinkedList<GamePiece> pieceList = new LinkedList<GamePiece>();
     
-    GameBoard gameBoard = new GameBoard(gamePlay);
     
     for (String line : lineArray) {
       String[] pair = line.split("=");

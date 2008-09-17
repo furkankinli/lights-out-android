@@ -1,15 +1,14 @@
 package com.google.games.lightsout;
 
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 
 public class GameMenu extends Activity {
   
@@ -61,11 +60,10 @@ public class GameMenu extends Activity {
   
   private boolean doesSavedGameExist() {
     try {
-      FileInputStream is = this.openFileInput(GamePlay.SAVE_FILE_NAME);
+      FileInputStream is = this.openFileInput(GameBoardSerializer.SAVE_FILE_NAME);
       if (is.read() != 1) {
         return true;
       }
-    } catch (FileNotFoundException e) {
     } catch (IOException e) {
       // Do nothing, any exceptions just return false
     }
