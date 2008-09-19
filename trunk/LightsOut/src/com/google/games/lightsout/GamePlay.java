@@ -10,7 +10,6 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 
 public class GamePlay extends Activity {
@@ -19,7 +18,11 @@ public class GamePlay extends Activity {
   public static final String TOTAL_TIME = "com.google.game.lightsout.TotalTime";
   public static final String TOTAL_MOVES = "com.google.game.lightsout.TotalMoves";
   
+  private static final int WIN_DIALOG_ID = 1;
+  
   private GameBoard gameBoard = null;
+  private boolean isWinDialogShowing = false;
+  private Dialog winDialog;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +30,8 @@ public class GamePlay extends Activity {
 
     setContentView(R.layout.game_play);
     
-    if (getIntent().getExtras() != null && getIntent().getExtras().getBoolean(NEW_GAME)
+    if (getIntent().getExtras() != null 
+        && getIntent().getExtras().getBoolean(NEW_GAME)
         && savedInstanceState == null) {
       this.gameBoard = new GameBoard(this);
     }
@@ -49,7 +53,11 @@ public class GamePlay extends Activity {
     if (gameBoard == null) {
       this.gameBoard = GameBoardSerializer.deserialize(this);
     }
-    this.gameBoard.setLevel(gameBoard.getLevel());
+    if (gameBoard.testWin()) {
+      this.onPrepareDialog(WIN_DIALOG_ID, this.winDialog);
+    } else {
+      this.gameBoard.startPlaying();
+    }
   }
   
   public void playLevel(int level) {
@@ -76,51 +84,75 @@ public class GamePlay extends Activity {
     }
   }
   
-  public void levelWon(final int level) {
-    final Dialog winDialog = new Dialog(this);
-    winDialog.setContentView(R.layout.win_dialog);
-    winDialog.setTitle(getString(R.string.level_passed).replaceFirst("%n", (level + 1) +""));
-    
-    TextView levelTimeTextView = (TextView) winDialog.findViewById(R.id.level_time_text);
-    TextView levelMovesTextView = (TextView) winDialog.findViewById(R.id.level_moves_text);
-    TextView totalTimeTextView = (TextView) winDialog.findViewById(R.id.total_time_text);
-    TextView totalMovesTextView = (TextView) winDialog.findViewById(R.id.total_moves_text);
-    levelTimeTextView.setText(this.gameBoard.getLevelSeconds() + "");
-    levelMovesTextView.setText(this.gameBoard.getLevelMoves() + "");
-    totalTimeTextView.setText(this.gameBoard.getTotalSeconds() + "");
-    totalMovesTextView.setText(this.gameBoard.getTotalMoves() + "");
-//    textView.setText(
-//        getString(R.string.level_time) + ": " + this.gameBoard.getLevelSeconds() + "\n"  +
-//        getString(R.string.level_moves) + ": " + this.gameBoard.getLevelMoves() + "\n" +
-//        getString(R.string.total_time) + ": " + this.gameBoard.getTotalSeconds() + "\n" +
-//        getString(R.string.total_moves) + ": " + this.gameBoard.getTotalMoves() + "\n");
-    
-    Button button = (Button) winDialog.findViewById(R.id.dialog_button);
-    if (level < 9) {
-      button.setText(getString(R.string.next_level).replaceFirst("%n", (level + 2) + ""));
-    } else {
-      button.setText(R.string.game_over);
+  public void levelWon() {
+    showDialog(WIN_DIALOG_ID);
+  }
+  
+  @Override
+  protected Dialog onCreateDialog(int id) {
+    switch (id) {
+      case WIN_DIALOG_ID:
+        final Dialog winDialog = new Dialog(this);
+        winDialog.setContentView(R.layout.win_dialog);
+        
+        Button button = (Button) winDialog.findViewById(R.id.dialog_button);
+        button.setOnClickListener(new OnClickListener() {
+          public void onClick(View v) {
+            if (gameBoard.getLevel() < 9) {
+              gameBoard.playNextLevel();
+            } else {
+              Intent intent = new Intent();
+              Bundle bundle = new Bundle();
+              bundle.putInt(TOTAL_TIME, gameBoard.getTotalSeconds());
+              bundle.putInt(TOTAL_MOVES, gameBoard.getTotalMoves());
+              intent.putExtras(bundle);
+              setResult(RESULT_OK, intent);
+              finish();
+            }
+            dismissDialog(WIN_DIALOG_ID);
+          }
+        });
+        this.winDialog = winDialog;
+        return winDialog;
     }
     
-    button.setOnClickListener(new OnClickListener() {
-      public void onClick(View v) {
-        if (level < 9) {
-          gameBoard.setLevel(level + 1);
-        } else {
-          Intent intent = new Intent();
-          Bundle bundle = new Bundle();
-          bundle.putInt(TOTAL_TIME, gameBoard.getTotalSeconds());
-          bundle.putInt(TOTAL_MOVES, gameBoard.getTotalMoves());
-          intent.putExtras(bundle);
-          setResult(RESULT_OK, intent);
-          finish();
-        }
-        winDialog.dismiss();
-      }
-    });
+    // This shouldn't be necessary, but it seems that android doesn't call
+    // onPrepareDialog when the app is being restored. So, if the phone is
+    // flipped open when the dialog is showing, onPrepareDialog isn't called
+    // unless the following line is present.
+    //this.onPrepareDialog(id, dialog);
     
-    winDialog.show();
+    return null;
   }
+  
+  @Override
+  protected void onPrepareDialog(int id, Dialog dialog) {
+    super.onPrepareDialog(id, dialog);
+    switch (id) {
+      case WIN_DIALOG_ID:
+        dialog.setTitle(getString(R.string.level_passed).replaceFirst("%n", (gameBoard.getLevel() + 1) +""));
+        
+        TextView levelTimeTextView = (TextView) dialog.findViewById(R.id.level_time_text);
+        TextView levelMovesTextView = (TextView) dialog.findViewById(R.id.level_moves_text);
+        TextView totalTimeTextView = (TextView) dialog.findViewById(R.id.total_time_text);
+        TextView totalMovesTextView = (TextView) dialog.findViewById(R.id.total_moves_text);
+        levelTimeTextView.setText(this.gameBoard.getLevelSeconds() + "");
+        levelMovesTextView.setText(this.gameBoard.getLevelMoves() + "");
+        totalTimeTextView.setText(this.gameBoard.getTotalSeconds() + "");
+        totalMovesTextView.setText(this.gameBoard.getTotalMoves() + "");
+        
+        Button button = (Button) dialog.findViewById(R.id.dialog_button);
+        if (gameBoard.getLevel() < 9) {
+          button.setText(getString(R.string.next_level).replaceFirst("%n", (gameBoard.getLevel() + 2) + ""));
+        } else {
+          button.setText(R.string.game_over);
+        }
+        
+        break;
+    }
+  }
+  
+  
   
   public void updateMoveCount(int moveCount) {
     TextView textView = (TextView) findViewById(R.id.moves_header);

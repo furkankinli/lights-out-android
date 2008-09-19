@@ -55,7 +55,7 @@ public class GameMenu extends Activity {
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
     super.onActivityResult(requestCode, resultCode, intent);
-    if (requestCode == GAME_PLAY) {
+    if (requestCode == GAME_PLAY && intent != null) {
       Bundle extras = intent.getExtras();
       int totalSeconds = extras.getInt(GamePlay.TOTAL_TIME);
       int totalMoves = extras.getInt(GamePlay.TOTAL_MOVES);

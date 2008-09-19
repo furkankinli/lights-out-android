@@ -79,7 +79,7 @@ public class GameBoardSerializer {
         size = Integer.parseInt(pair[1]);
       } else if ("level".equals(pair[0])) {
         level = Integer.parseInt(pair[1]);
-      } else if ("pieceList".equals(pair[0])) {
+      } else if ("pieceList".equals(pair[0]) && pair[1].length() > 0) {
         //String listString = pair[1].replaceFirst("^\\[", "");
         //listString = listString.replaceFirst("\\]$", "");
         String[] pieceListString = pair[1].split(",");

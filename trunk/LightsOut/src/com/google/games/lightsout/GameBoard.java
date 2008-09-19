@@ -47,9 +47,7 @@ public class GameBoard {
     this.level = level;
   }
   
-  public void setLevel(int level) {
-    this.level = level;
-    
+  public void startPlaying() {
     this.levelSeconds = 0;
     this.levelMoves = 0;
     
@@ -78,6 +76,14 @@ public class GameBoard {
     
     gamePlay.playLevel(level);
     startTimer();
+  }
+  
+  public void playNextLevel() {
+    stopTimer();
+    this.level++;
+    this.pieceToIndexMap.clear();
+    this.pieceList.clear();
+    startPlaying();
   }
   
   public GamePiece getGamePieceByIndex(int index) {
@@ -117,9 +123,8 @@ public class GameBoard {
       stopTimer();
       totalMoves = totalMoves + levelMoves;
       totalSeconds = totalSeconds + levelSeconds;
-      this.pieceList.clear();
       
-      this.gamePlay.levelWon(this.level);
+      this.gamePlay.levelWon();
     }
   }
   
@@ -145,7 +150,10 @@ public class GameBoard {
     }
   }
   
-  private boolean testWin() {
+  public boolean testWin() {
+    if (pieceList.size() == 0) {
+      return false;
+    }
     for (GamePiece gamePiece : pieceList) {
       if (gamePiece.isLightOn()) {
         return false;
