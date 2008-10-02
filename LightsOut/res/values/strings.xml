@@ -17,5 +17,8 @@
     <string name="next_level">On to level %n!</string>
     <string name="game_over">Game over</string>
     <string name="ok">OK</string>
-    <string name="enter_your_name">Enter your name:</string>
+    <string name="high_score_enter_your_name">High Score! Enter your name:</string>
+    <string name="name">Name</string>
+    <string name="fastest_times">Fastest times</string>
+    <string name="fewest_moves">Fewest moves</string>
 </resources>
