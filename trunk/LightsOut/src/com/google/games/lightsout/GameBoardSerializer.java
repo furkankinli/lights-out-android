@@ -27,6 +27,7 @@ public class GameBoardSerializer {
     buffer.append("levelMoves=" + gameBoard.getLevelMoves() + "\n");
     buffer.append("size=" + gameBoard.getSize() + "\n");
     buffer.append("level=" + gameBoard.getLevel() + "\n");
+    buffer.append("minMoves=" + gameBoard.getMinMoves() + "\n");
     buffer.append("pieceList=" + pieceListStringBuffer.toString() + "\n");
     
     
@@ -61,7 +62,7 @@ public class GameBoardSerializer {
     
     String[] lineArray = fileContents.split("\n");
     int size = 5, level = 0, totalSeconds = 0, totalMoves = 0, 
-        levelSeconds = 0, levelMoves = 0;
+        levelSeconds = 0, levelMoves = 0, minMoves = 0;
     LinkedList<GamePiece> pieceList = new LinkedList<GamePiece>();
     
     
@@ -79,6 +80,8 @@ public class GameBoardSerializer {
         size = Integer.parseInt(pair[1]);
       } else if ("level".equals(pair[0])) {
         level = Integer.parseInt(pair[1]);
+      } else if ("minMoves".equals(pair[0])) {
+        minMoves = Integer.parseInt(pair[1]);
       } else if ("pieceList".equals(pair[0]) && pair[1].length() > 0) {
         //String listString = pair[1].replaceFirst("^\\[", "");
         //listString = listString.replaceFirst("\\]$", "");
@@ -94,7 +97,7 @@ public class GameBoardSerializer {
     }
     
     gameBoard.setProperties(pieceList, totalSeconds, totalMoves, 
-        levelSeconds, levelMoves, size, level);
+        levelSeconds, levelMoves, size, level, minMoves);
     
     return gameBoard;
   }

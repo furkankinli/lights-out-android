@@ -4,70 +4,102 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeMap;
 
 import android.app.Activity;
 
 public class HighScoreManager {
 
+  private static final long serialVersionUID = 1L;
+  
   private static final String MOVES_FILE_NAME = "moves_high_scores";
   private static final String TIME_FILE_NAME = "time_high_scores";
 
   private static final String SEP = "=";
+  public static final int NUM_SCORES = 5;
+  
+  private LinkedList<NamePair> timeList;
+  private LinkedList<NamePair> movesList;
   
   private boolean isLoaded;
-  private TreeMap<Integer, String> timeMap;
-  private TreeMap<Integer, String> movesMap;
   private Activity activity;
-
-  public HighScoreManager(Activity activity) {
+  
+  public HighScoreManager(Activity activity){
     this.activity = activity;
     this.isLoaded = false;
-    this.timeMap = new TreeMap<Integer, String>();
-    this.movesMap = new TreeMap<Integer, String>();
-  }
-
-  public void addTimeScore(int time, String name) {
-    load();
-    name = name.replaceAll(SEP, "");
-    timeMap.put(time, name);
-    if (timeMap.size() > 5 ) {
-      timeMap.remove(timeMap.lastKey());
-    }
-    save();
+    this.timeList = new LinkedList<NamePair>();
+    this.movesList = new LinkedList<NamePair>();
   }
   
-  public void addMovesScore(int moves, String name) {
+  public static class NamePair {
+    public String name;
+    public int score, time, moves;
+
+    public NamePair(String name, int score, int time, int moves) {
+      this.name = name;
+      this.score = score;
+      this.time = time;
+      this.moves = moves;
+    }
+  }
+
+  public int addTimeScore(String name, int time, int moves) {
+    return this.addScore(new NamePair(name, time, time, moves), timeList);
+  }
+  
+  public int addMovesScore(String name, int time, int moves) {
+    return this.addScore(new NamePair(name, moves, time, moves), movesList);
+  }
+  
+  private int addScore(NamePair namePair, LinkedList<NamePair> list) {
     load();
-    name = name.replaceAll(SEP, "");
-    movesMap.put(moves, name);
-    if (movesMap.size() > 5) {
-      movesMap.remove(movesMap.lastKey());
+    namePair.name = namePair.name.replaceAll(SEP, "");
+    int position = list.size();
+    for (int i = 0; i < list.size(); i++) {
+      if (namePair.score < list.get(i).score) {
+        list.add(i, namePair);
+        position = i;
+        break;
+      }
+    }
+    if (position == list.size() && list.size() < NUM_SCORES) {
+      list.add(namePair);
+      position = list.size() - 1;
+    }
+    
+    if (list.size() > NUM_SCORES) {
+      list.removeLast();
     }
     save();
+    
+    return position;
   }
   
   public boolean isHighScore(int time, int moves) {
     load();
-    return this.timeMap.size() < 5
-        || this.timeMap.lastKey() > time
-        || this.movesMap.size() < 5
-        || this.movesMap.lastKey() > moves;
+    return this.timeList.size() < NUM_SCORES
+        || this.timeList.getLast().score > time
+        || this.movesList.size() < NUM_SCORES
+        || this.movesList.getLast().score > moves;
   }
   
   private void save() {
-    writeFile(MOVES_FILE_NAME, getMapInStringForm(movesMap));
-    writeFile(TIME_FILE_NAME, getMapInStringForm(timeMap));
+    writeFile(MOVES_FILE_NAME, getListInStringForm(movesList));
+    writeFile(TIME_FILE_NAME, getListInStringForm(timeList));
   }
 
-  private String getMapInStringForm(TreeMap<Integer, String> map) {
+  private String getListInStringForm(List<NamePair> list) {
     StringBuffer buffer = new StringBuffer();
-
-    for (Integer key : map.keySet()) {
-      buffer.append(key + SEP + map.get(key));
+    
+    for (int i = 0; i < list.size(); i++) {
+      NamePair namePair = list.get(i);
+      buffer.append(namePair.name + SEP + namePair.time + SEP + namePair.moves);
       buffer.append('\n');
     }
+    
     if (buffer.length() > 0) {
       buffer.deleteCharAt(buffer.length() - 1);
     }
@@ -80,25 +112,36 @@ public class HighScoreManager {
       return;
     }
     
-    String movesFileContents = readFile(MOVES_FILE_NAME);
     String timeFileContents = readFile(TIME_FILE_NAME);
+    String movesFileContents = readFile(MOVES_FILE_NAME);
     
-    this.timeMap = parseContents(movesFileContents);
-    this.movesMap = parseContents(timeFileContents);
+    this.timeList = parseContents(timeFileContents, 1);
+    this.movesList = parseContents(movesFileContents, 2);
     
     isLoaded = true;
   }
   
-  private TreeMap<Integer, String> parseContents(String fileContents) {
-    TreeMap<Integer, String> map = new TreeMap<Integer, String>();
+  private LinkedList<NamePair> parseContents(String fileContents, int scoreIndex) {
+    LinkedList<NamePair> list = new LinkedList<NamePair>();
     String[] lineArray = fileContents.split("\n");
     for (String line : lineArray) {
       if (line.length() > 0) {
         String[] pair = line.split(SEP);
-        map.put(Integer.parseInt(pair[0]), pair[1]);
+        list.add(new NamePair(pair[0], Integer.parseInt(pair[scoreIndex]),
+            Integer.parseInt(pair[1]),Integer.parseInt(pair[2])));
       }
     }
-    return map;
+    return list;
+  }
+
+  public LinkedList<NamePair> getTimeList() {
+    load();
+    return timeList;
+  }
+
+  public LinkedList<NamePair> getMovesList() {
+    load();
+    return movesList;
   }
 
   private String readFile(String fileName) {
@@ -112,6 +155,7 @@ public class HighScoreManager {
         buffer.append("\n");
       }
       reader.close();
+//      return "";
       return(buffer.toString());
     } catch (IOException e) {
       return "";

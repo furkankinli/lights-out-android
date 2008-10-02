@@ -1,8 +1,10 @@
 package com.google.games.lightsout;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.Set;
 
 import android.graphics.Bitmap;
 import android.os.Handler;
@@ -11,8 +13,8 @@ import android.os.SystemClock;
 public class GameBoard {
 
   private int size, level;
-  private int totalSeconds, totalMoves, levelSeconds, levelMoves, 
-      levelSecondsOffset = 0;
+  private int totalSeconds, totalMoves, levelSeconds, levelMoves,
+      minMoves, levelSecondsOffset = 0;
 
   private boolean isTimerActive;
   
@@ -26,12 +28,13 @@ public class GameBoard {
   
   public GameBoard(GamePlay gamePlay) {
     this.gamePlay = gamePlay;
-    this.setProperties(new LinkedList<GamePiece>(), 0, 0, 0, 0, 5, 0);
+    this.setProperties(new LinkedList<GamePiece>(), 0, 0, 0, 0, 0, 0, 0);
     pieceBitmapMap = new HashMap<String, Bitmap>();
   }
   
   public void setProperties(LinkedList<GamePiece> pieceList, int totalSeconds,
-      int totalMoves, int levelSeconds, int levelMoves, int size, int level) {
+      int totalMoves, int levelSeconds, int levelMoves, int size, int level,
+      int minMoves) {
     this.pieceList = pieceList;
     this.pieceToIndexMap = new HashMap<GamePiece, Integer>();
     for (int i = 0; i < pieceList.size(); i++) {
@@ -45,6 +48,7 @@ public class GameBoard {
     this.levelMoves = levelMoves;
     this.size = size;
     this.level = level;
+    this.minMoves = minMoves;
   }
   
   public void startPlaying() {
@@ -68,14 +72,27 @@ public class GameBoard {
         this.pieceToIndexMap.put(gamePiece, i);
       }
       
-      Random random = new Random();
-      for (int i = 0; i < 2 * (level + 1) + 1; i++) {
-        doTogglePiece(pieceList.get(random.nextInt(size * size)));
+      this.minMoves = levelSeconds + 3;
+      Set<Integer> positionSet = getRandomPositions(size * size, level + 3);
+      for (int i : positionSet) {
+        doTogglePiece(pieceList.get(i));
       }
     }
     
     gamePlay.playLevel(level);
     startTimer();
+  }
+  
+  private Set<Integer> getRandomPositions(int uppperLimit, int numPositions) {
+    assert(uppperLimit > numPositions);
+    
+    Random random = new Random();
+    HashSet<Integer> set = new HashSet<Integer>();
+    while (set.size() < numPositions) {
+      set.add(random.nextInt(uppperLimit));
+    }
+    
+    return set;
   }
   
   public void playNextLevel() {
@@ -188,6 +205,10 @@ public class GameBoard {
   
   public LinkedList<GamePiece> getPieceList() {
     return pieceList;
+  }
+
+  public int getMinMoves() {
+    return minMoves;
   }
 
   public void setLevelSeconds(int seconds) {
