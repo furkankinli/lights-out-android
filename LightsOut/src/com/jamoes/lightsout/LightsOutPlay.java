@@ -1,8 +1,8 @@
-package com.google.games.lightsout;
+package com.jamoes.lightsout;
 
 import java.util.List;
 
-import com.google.games.lightsout.HighScoreManager.NamePair;
+import com.jamoes.lightsout.HighScoreManager.NamePair;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
@@ -20,13 +21,14 @@ import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class GamePlay extends Activity {
+public class LightsOutPlay extends Activity {
   
-  public static final String HIGH_SCORES = "com.google.game.lightsout.HIGH_SCORES";
-  public static final String NEW_GAME = "com.google.game.lightsout.NEW_GAME";
-  public static final String TOTAL_TIME = "com.google.game.lightsout.TotalTime";
-  public static final String TOTAL_MOVES = "com.google.game.lightsout.TotalMoves";
+  public static final String HIGH_SCORES = "com.jamoes.lightsout.HIGH_SCORES";
+  public static final String NEW_GAME = "com.jamoes.lightsout.NEW_GAME";
+  public static final String TOTAL_TIME = "com.jamoes.lightsout.TotalTime";
+  public static final String TOTAL_MOVES = "com.jamoes.lightsout.TotalMoves";
   
   private GameBoard gameBoard = null;
   private HighScoreManager highScoreManager;
@@ -121,7 +123,7 @@ public class GamePlay extends Activity {
     totalMovesTextView.setText(this.gameBoard.getTotalMoves() + "");
     
     Button button = (Button) dialog.findViewById(R.id.dialog_button);
-    if (gameBoard.getLevel() < 0) {
+    if (gameBoard.getLevel() < GameBoard.LAST_LEVEL) {
       button.setText(getString(R.string.next_level).replaceFirst("%n", (gameBoard.getLevel() + 2) + ""));
       dialog.setTitle(getString(R.string.level_passed).replaceFirst("%n", (gameBoard.getLevel() + 1) +""));
     } else {
@@ -140,7 +142,7 @@ public class GamePlay extends Activity {
     });
     dialog.setOnDismissListener(new OnDismissListener() {
       public void onDismiss(DialogInterface dialogInterface) {
-        if (gameBoard.getLevel() < 0) {
+        if (gameBoard.getLevel() < GameBoard.LAST_LEVEL) {
           gameBoard.playNextLevel();
         } else {
           EditText highScoreEditText = (EditText) dialog.findViewById(R.id.high_score_name);
@@ -158,6 +160,8 @@ public class GamePlay extends Activity {
             gameBoard.getLevelSeconds(), gameBoard.getTotalMoves()),
         highScoreManager.addMovesScore(name, 
             gameBoard.getLevelSeconds(), gameBoard.getTotalMoves()));
+    GameBoardSerializer.serialize(this, null);
+    this.gameBoard = null;
   }
   
   public void showHighScores() {
@@ -223,5 +227,19 @@ public class GamePlay extends Activity {
   public void updateSeconds(int seconds) {
     TextView textView = (TextView) findViewById(R.id.time_header);
     textView.setText(getString(R.string.time) + ": " + this.gameBoard.getLevelSeconds());
+  }
+
+  public void showLevelStartMessage(int level, int minMoves) {
+    Toast toast = Toast.makeText(this, 
+        getString(R.string.starting_level) + " " + (level + 1), 
+        Toast.LENGTH_SHORT);
+    toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+    toast.show();
+    
+    Toast toast2 = Toast.makeText(this, 
+        getString(R.string.minimum_moves) + " " + minMoves, 
+        Toast.LENGTH_SHORT);
+    toast2.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+    toast2.show();
   }
 }

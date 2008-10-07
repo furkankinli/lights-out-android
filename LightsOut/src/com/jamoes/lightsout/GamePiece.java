@@ -1,4 +1,4 @@
-package com.google.games.lightsout;
+package com.jamoes.lightsout;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.TableLayout;
@@ -15,7 +16,7 @@ public class GamePiece extends Button {
   private static final int PADDING = 3; 
 
   private GameBoard gameBoard;
-  private boolean isLightOn, isTouchDown;
+  private boolean isLightOn, isBlock;
   
   public GamePiece(Context context, GameBoard gameBoard) {
     this(context, gameBoard, false);
@@ -25,7 +26,7 @@ public class GamePiece extends Button {
     super(context);
     this.gameBoard = gameBoard;
     this.isLightOn = isLightOn;
-    this.isTouchDown = false;
+    this.isBlock = false;
   }
   
   @Override
@@ -38,11 +39,13 @@ public class GamePiece extends Button {
     super.onDraw(canvas);
     canvas.drawRect(new Rect(0, 0, getWidth(), getHeight()), new Paint());
     
-    if (this.isTouchDown) {
+    if (isFocused()) {
       drawImage(canvas, R.drawable.red_block, 0);
     }
-    
-    if (isLightOn) {
+
+    if (isBlock) {
+      drawImage(canvas, R.drawable.block, PADDING);
+    } else if (isLightOn) {
       drawImage(canvas, R.drawable.lights_on, PADDING);
     } else {
       drawImage(canvas, R.drawable.lights_off, PADDING);
@@ -67,27 +70,44 @@ public class GamePiece extends Button {
   @Override
   public boolean onTouchEvent(MotionEvent event) {
     switch (event.getAction()) {
-    case MotionEvent.ACTION_DOWN:
-      this.isTouchDown = true;
-      this.invalidate();
-      return true;
-    case MotionEvent.ACTION_UP:
-      this.isTouchDown = false;
-      this.gameBoard.togglePiece(this);
-      this.invalidate();
-      return true;
+      case MotionEvent.ACTION_DOWN:
+        return true;
+      case MotionEvent.ACTION_UP:
+        this.gameBoard.togglePiece(this);
+        this.invalidate();
+        return true;
     }
     return false;
   }
   
+  @Override
+  public boolean onKeyUp(int keyCode, KeyEvent event) {
+    if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+        || keyCode == KeyEvent.KEYCODE_ENTER) {
+      this.gameBoard.togglePiece(this);
+    }
+    return super.onKeyUp(keyCode, event);
+  }
   
   public void toggleLights() {
+    if (this.isBlock) {
+      return;
+    }
     this.isLightOn = !this.isLightOn;
     this.invalidate();
   }
   
   public boolean isLightOn() {
     return isLightOn;
+  }
+  
+  public void enableBlock() {
+    this.isBlock = true;
+    this.invalidate();
+  }
+  
+  public boolean isBlock() {
+    return this.isBlock;
   }
   
 }

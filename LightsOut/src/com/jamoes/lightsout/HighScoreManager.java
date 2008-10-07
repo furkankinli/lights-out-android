@@ -1,4 +1,4 @@
-package com.google.games.lightsout;
+package com.jamoes.lightsout;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -165,7 +165,7 @@ public class HighScoreManager {
   private void writeFile(String fileName, String contents) {
     try {
       DataOutputStream os = new DataOutputStream(
-          activity.openFileOutput(fileName, GamePlay.MODE_PRIVATE));
+          activity.openFileOutput(fileName, LightsOutPlay.MODE_PRIVATE));
       os.writeBytes(contents);
       os.close();
     } catch (IOException e) {
