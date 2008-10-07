@@ -9,7 +9,6 @@ import java.util.Set;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.util.Log;
 
 public class GameBoard {
 
@@ -21,7 +20,7 @@ public class GameBoard {
 
   private boolean isTimerActive;
   
-  private LinkedList<GamePiece> pieceList;
+  private LinkedList<GamePiece> pieceList, originalPieceList;
   private HashMap<GamePiece, Integer> pieceToIndexMap;
   private LightsOutPlay gamePlay;
   
@@ -31,18 +30,16 @@ public class GameBoard {
   
   public GameBoard(LightsOutPlay gamePlay) {
     this.gamePlay = gamePlay;
-    this.setProperties(new LinkedList<GamePiece>(), 0, 0, 0, 0, 0, 0);
+    this.setProperties(new LinkedList<GamePiece>(), new LinkedList<GamePiece>(),
+        0, 0, 0, 0, 0, 0);
     pieceBitmapMap = new HashMap<String, Bitmap>();
   }
   
-  public void setProperties(LinkedList<GamePiece> pieceList, int totalSeconds,
+  public void setProperties(LinkedList<GamePiece> pieceList,
+      LinkedList<GamePiece> originalPieceList, int totalSeconds,
       int totalMoves, int levelSeconds, int levelMoves, int size, int level) {
-    this.pieceList = pieceList;
-    this.pieceToIndexMap = new HashMap<GamePiece, Integer>();
-    for (int i = 0; i < pieceList.size(); i++) {
-      this.pieceToIndexMap.put(pieceList.get(i), i);
-    }
-    
+    this.setPieceList(pieceList);
+    this.originalPieceList = originalPieceList;
     this.totalSeconds = totalSeconds;
     this.totalMoves = totalMoves;
     this.levelSeconds = levelSeconds;
@@ -52,25 +49,46 @@ public class GameBoard {
     this.level = level;
   }
   
+  private void setPieceList(LinkedList<GamePiece> pieceList) {
+    this.pieceList = pieceList;
+    this.pieceToIndexMap = new HashMap<GamePiece, Integer>();
+    for (int i = 0; i < pieceList.size(); i++) {
+      this.pieceToIndexMap.put(pieceList.get(i), i);
+    }
+  }
+  
+  public void restartLevel() {
+    setPieceList(originalPieceList);
+    
+    originalPieceList = new LinkedList<GamePiece>();
+    for (GamePiece gamePiece : pieceList) {
+      originalPieceList.add(new GamePiece(gamePlay, this, 
+          gamePiece.isLightOn(), gamePiece.isBlock()));
+    }
+    
+    gamePlay.showLevelStartMessage(level);
+    gamePlay.playLevel(level);
+  }
+  
   public void startPlaying() {
     this.levelSeconds = 0;
-    
-    this.size = 5;
-    if (level == 1) {
-      this.size = 4;
-    } else if (level == 6) {
-      this.size = 6;
-    }
-    
-    int numBlocks = 0;
-    if (level > 1) {
-      Random random = new Random();
-      numBlocks = level / 2 - 1 + random.nextInt(2);
-    }
     
     if (pieceList.size() == 0) {
       this.levelMoves = 0;
       this.levelSecondsOffset = 0;
+      
+      this.size = 5;
+      if (level == 1) {
+        this.size = 4;
+      } else if (level == 6) {
+        this.size = 6;
+      }
+      
+      int numBlocks = 0;
+      if (level > 1) {
+        Random random = new Random();
+        numBlocks = level / 2 - 1 + random.nextInt(2);
+      }
       
       this.pieceBitmapMap.clear();
       for (int i = 0; i < size * size; i++) {
@@ -91,7 +109,13 @@ public class GameBoard {
         doTogglePiece(pieceList.get(i));
       }
       
-      gamePlay.showLevelStartMessage(level, minMoves);
+      originalPieceList.clear();
+      for (GamePiece gamePiece : pieceList) {
+        originalPieceList.add(new GamePiece(gamePlay, this, 
+            gamePiece.isLightOn(), gamePiece.isBlock()));
+      }
+      
+      gamePlay.showLevelStartMessage(level);
     }
     
     gamePlay.playLevel(level);
@@ -228,6 +252,10 @@ public class GameBoard {
   
   public LinkedList<GamePiece> getPieceList() {
     return pieceList;
+  }
+  
+  public LinkedList<GamePiece> getOriginalPieceList() {
+    return originalPieceList;
   }
 
   public void setLevelSeconds(int seconds) {

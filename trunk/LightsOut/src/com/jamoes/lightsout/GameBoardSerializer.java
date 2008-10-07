@@ -5,25 +5,25 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
+import java.util.List;
 
 public class GameBoardSerializer {
   
   public static final String SAVE_FILE_NAME = "gameplay";
+  private LightsOutPlay gamePlay;
 
-  public static void serialize(LightsOutPlay gamePlay, GameBoard gameBoard) {
+  public GameBoardSerializer(LightsOutPlay gamePlay) {
+    this.gamePlay = gamePlay;
+  }
+  
+  public void serialize(GameBoard gameBoard) {
     StringBuffer buffer = new StringBuffer();
     
     if (gameBoard != null) {
-      StringBuffer pieceListStringBuffer = new StringBuffer();
-      for(GamePiece gamePiece : gameBoard.getPieceList()) {
-        pieceListStringBuffer.append(gamePiece.isLightOn() ? "1"
-            : gamePiece.isBlock() ? "2"
-            : "0");
-        pieceListStringBuffer.append(",");
-      }
-      if (pieceListStringBuffer.length() > 0) {
-        pieceListStringBuffer.deleteCharAt(pieceListStringBuffer.length() - 1);
-      }
+      
+      String pieceListString = getPieceListString(gameBoard.getPieceList());
+      String originalPieceListSring = getPieceListString(
+          gameBoard.getOriginalPieceList());
       
       buffer.append("totalSeconds=" + gameBoard.getTotalSeconds() + "\n");
       buffer.append("totalMoves=" + gameBoard.getTotalMoves() + "\n");
@@ -31,7 +31,8 @@ public class GameBoardSerializer {
       buffer.append("levelMoves=" + gameBoard.getLevelMoves() + "\n");
       buffer.append("size=" + gameBoard.getSize() + "\n");
       buffer.append("level=" + gameBoard.getLevel() + "\n");
-      buffer.append("pieceList=" + pieceListStringBuffer.toString() + "\n");
+      buffer.append("pieceList=" + pieceListString + "\n");
+      buffer.append("originalPieceList=" + originalPieceListSring + "\n");
     }
     
     try {
@@ -44,7 +45,22 @@ public class GameBoardSerializer {
     }
   }
   
-  public static GameBoard deserialize(LightsOutPlay gamePlay) {
+  private String getPieceListString(List<GamePiece> pieceList) {
+    StringBuffer pieceListStringBuffer = new StringBuffer();
+    for(GamePiece gamePiece : pieceList) {
+      pieceListStringBuffer.append(gamePiece.isLightOn() ? "1"
+          : gamePiece.isBlock() ? "2"
+          : "0");
+      pieceListStringBuffer.append(",");
+    }
+    if (pieceListStringBuffer.length() > 0) {
+      pieceListStringBuffer.deleteCharAt(pieceListStringBuffer.length() - 1);
+    }
+    
+    return pieceListStringBuffer.toString();
+  }
+  
+  public GameBoard deserialize() {
     GameBoard gameBoard = new GameBoard(gamePlay);
     String fileContents;
     
@@ -66,7 +82,7 @@ public class GameBoardSerializer {
     String[] lineArray = fileContents.split("\n");
     int size = 5, level = 0, totalSeconds = 0, totalMoves = 0, 
         levelSeconds = 0, levelMoves = 0;
-    LinkedList<GamePiece> pieceList = new LinkedList<GamePiece>();
+    LinkedList<GamePiece> pieceList = null, originalPieceList = null;
     
     
     for (String line : lineArray) {
@@ -84,24 +100,31 @@ public class GameBoardSerializer {
       } else if ("level".equals(pair[0])) {
         level = Integer.parseInt(pair[1]);
       } else if ("pieceList".equals(pair[0]) && pair[1].length() > 0) {
-        //String listString = pair[1].replaceFirst("^\\[", "");
-        //listString = listString.replaceFirst("\\]$", "");
-        String[] pieceListString = pair[1].split(",");
-        for (String pieceValue : pieceListString) {
-          GamePiece gamePiece = new GamePiece(gamePlay, gameBoard);
-          if ("1".equals(pieceValue)) {
-            gamePiece.toggleLights();
-          } else if ("2".equals(pieceValue)) {
-            gamePiece.enableBlock();
-          }
-          pieceList.add(gamePiece);
-        }
+        pieceList = getPieceList(pair[1], gameBoard);
+      } else if ("originalPieceList".equals(pair[0]) && pair[1].length() > 0) {
+        originalPieceList = getPieceList(pair[1], gameBoard);
       }
     }
     
-    gameBoard.setProperties(pieceList, totalSeconds, totalMoves, 
+    gameBoard.setProperties(pieceList, originalPieceList, totalSeconds, totalMoves, 
         levelSeconds, levelMoves, size, level);
     
     return gameBoard;
+  }
+  
+  private LinkedList<GamePiece> getPieceList(String s, GameBoard gameBoard) {
+    LinkedList<GamePiece> pieceList = new LinkedList<GamePiece>();
+    String[] pieceListString = s.split(",");
+    for (String pieceValue : pieceListString) {
+      GamePiece gamePiece = new GamePiece(gamePlay, gameBoard);
+      if ("1".equals(pieceValue)) {
+        gamePiece.toggleLights();
+      } else if ("2".equals(pieceValue)) {
+        gamePiece.enableBlock();
+      }
+      pieceList.add(gamePiece);
+    }
+    
+    return pieceList;
   }
 }

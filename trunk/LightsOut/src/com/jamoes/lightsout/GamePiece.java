@@ -19,14 +19,15 @@ public class GamePiece extends Button {
   private boolean isLightOn, isBlock;
   
   public GamePiece(Context context, GameBoard gameBoard) {
-    this(context, gameBoard, false);
+    this(context, gameBoard, false, false);
   }
   
-  public GamePiece(Context context, GameBoard gameBoard, boolean isLightOn) {
+  public GamePiece(Context context, GameBoard gameBoard, boolean isLightOn,
+      boolean isBlock) {
     super(context);
     this.gameBoard = gameBoard;
     this.isLightOn = isLightOn;
-    this.isBlock = false;
+    this.isBlock = isBlock;
   }
   
   @Override
