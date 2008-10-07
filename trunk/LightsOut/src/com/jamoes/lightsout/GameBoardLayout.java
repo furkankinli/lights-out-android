@@ -1,4 +1,4 @@
-package com.google.games.lightsout;
+package com.jamoes.lightsout;
 
 import android.content.Context;
 import android.view.View;
