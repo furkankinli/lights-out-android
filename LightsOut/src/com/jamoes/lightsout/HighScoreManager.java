@@ -4,10 +4,8 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.TreeMap;
 
 import android.app.Activity;
 
@@ -86,6 +84,12 @@ public class HighScoreManager {
         || this.movesList.getLast().score > moves;
   }
   
+  public void resetHighScores() {
+    this.movesList.clear();
+    this.timeList.clear();
+    save();
+  }
+  
   private void save() {
     writeFile(MOVES_FILE_NAME, getListInStringForm(movesList));
     writeFile(TIME_FILE_NAME, getListInStringForm(timeList));
@@ -155,7 +159,6 @@ public class HighScoreManager {
         buffer.append("\n");
       }
       reader.close();
-//      return "";
       return(buffer.toString());
     } catch (IOException e) {
       return "";

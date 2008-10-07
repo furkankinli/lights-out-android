@@ -11,6 +11,8 @@ import android.content.DialogInterface.OnDismissListener;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
@@ -32,6 +34,7 @@ public class LightsOutPlay extends Activity {
   
   private GameBoard gameBoard = null;
   private HighScoreManager highScoreManager;
+  private GameBoardSerializer gameBoardSerializer;
   private Dialog dialog;
   private boolean isHighScores = false;
   
@@ -42,6 +45,9 @@ public class LightsOutPlay extends Activity {
     setContentView(R.layout.game_play);
     
     this.highScoreManager = new HighScoreManager(this);
+    this.gameBoardSerializer = new GameBoardSerializer(this);
+    
+    isHighScores = false;
     
     if (getIntent().getExtras() != null 
         && getIntent().getExtras().getBoolean(NEW_GAME)
@@ -60,7 +66,7 @@ public class LightsOutPlay extends Activity {
     
     if (gameBoard != null) {
       gameBoard.stopTimer();
-      GameBoardSerializer.serialize(this, gameBoard);
+      gameBoardSerializer.serialize(gameBoard);
     }
   }
   
@@ -74,7 +80,7 @@ public class LightsOutPlay extends Activity {
     }
 
     if (gameBoard == null) {
-      this.gameBoard = GameBoardSerializer.deserialize(this);
+      this.gameBoard = gameBoardSerializer.deserialize();
     }
     if (gameBoard.testWin()) {
       updateMoveCount(gameBoard.getLevelMoves());
@@ -160,7 +166,7 @@ public class LightsOutPlay extends Activity {
             gameBoard.getLevelSeconds(), gameBoard.getTotalMoves()),
         highScoreManager.addMovesScore(name, 
             gameBoard.getLevelSeconds(), gameBoard.getTotalMoves()));
-    GameBoardSerializer.serialize(this, null);
+    gameBoardSerializer.serialize(null);
     this.gameBoard = null;
   }
   
@@ -173,9 +179,11 @@ public class LightsOutPlay extends Activity {
     isHighScores = true;
     
     TableLayout timeTable = (TableLayout) findViewById(R.id.time_table);
-    addScoresToHighScoreTable(timeTable, highScoreManager.getTimeList());
+    addScoresToHighScoreTable(timeTable, highScoreManager.getTimeList(),
+        timePosition);
     TableLayout movesTable = (TableLayout) findViewById(R.id.moves_table);
-    addScoresToHighScoreTable(movesTable, highScoreManager.getMovesList());
+    addScoresToHighScoreTable(movesTable, highScoreManager.getMovesList(),
+        movesPosition);
     
     Button button = (Button) findViewById(R.id.high_scores_button);
     button.setOnClickListener(new OnClickListener() {
@@ -185,7 +193,34 @@ public class LightsOutPlay extends Activity {
     });
   }
   
-  private void addScoresToHighScoreTable(TableLayout table, List<NamePair> list) {
+  @Override
+  public boolean onPrepareOptionsMenu(Menu menu) {
+    super.onPrepareOptionsMenu(menu);
+    
+    menu.clear();
+    if (isHighScores) {
+      menu.add(R.string.reset_high_scores);
+    } else {
+      menu.add(R.string.restart_level);
+    }
+    
+    return true;
+  }
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    if (isHighScores) {
+      this.highScoreManager.resetHighScores();
+      showHighScores();
+    } else {
+      this.gameBoard.restartLevel();
+    }
+    
+    return super.onOptionsItemSelected(item);
+  }
+  
+  private void addScoresToHighScoreTable(TableLayout table, List<NamePair> list,
+      int highlightPosition) {
     for (int i = 0; i < HighScoreManager.NUM_SCORES; i++) {
       String name = "", timeScore = "", movesScore = "";
       String position = (i + 1) + ". ";
@@ -215,6 +250,10 @@ public class LightsOutPlay extends Activity {
         row.setBackgroundColor(Color.rgb(50, 50, 50));
       }
       
+      if (i == highlightPosition) {
+        row.setBackgroundColor(Color.rgb(150, 100, 0));
+      }
+      
       table.addView(row);
     }
   }
@@ -229,17 +268,13 @@ public class LightsOutPlay extends Activity {
     textView.setText(getString(R.string.time) + ": " + this.gameBoard.getLevelSeconds());
   }
 
-  public void showLevelStartMessage(int level, int minMoves) {
-    Toast toast = Toast.makeText(this, 
-        getString(R.string.starting_level) + " " + (level + 1), 
-        Toast.LENGTH_SHORT);
-    toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
-    toast.show();
-    
-    Toast toast2 = Toast.makeText(this, 
-        getString(R.string.minimum_moves) + " " + minMoves, 
-        Toast.LENGTH_SHORT);
-    toast2.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
-    toast2.show();
+  public void showLevelStartMessage(int level) {
+    if (level == 0) {
+      Toast toast = Toast.makeText(this, 
+          getString(R.string.level_start_message), 
+          Toast.LENGTH_LONG);
+      toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+      toast.show();
+    }
   }
 }
