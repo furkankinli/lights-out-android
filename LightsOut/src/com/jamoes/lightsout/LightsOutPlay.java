@@ -29,8 +29,10 @@ public class LightsOutPlay extends Activity {
   
   public static final String HIGH_SCORES = "com.jamoes.lightsout.HIGH_SCORES";
   public static final String NEW_GAME = "com.jamoes.lightsout.NEW_GAME";
-  public static final String TOTAL_TIME = "com.jamoes.lightsout.TotalTime";
-  public static final String TOTAL_MOVES = "com.jamoes.lightsout.TotalMoves";
+  public static final String IS_HIGH_SCORES = "com.jamoes.lightsout.IS_HIGH_SCORES";
+  
+  public static final int MENU_HINT = 0;
+  public static final int MENU_RESTART = 1;
   
   private GameBoard gameBoard = null;
   private HighScoreManager highScoreManager;
@@ -49,15 +51,23 @@ public class LightsOutPlay extends Activity {
     
     isHighScores = false;
     
-    if (getIntent().getExtras() != null 
-        && getIntent().getExtras().getBoolean(NEW_GAME)
-        && savedInstanceState == null) {
+    if (savedInstanceState != null) {
+      this.isHighScores = savedInstanceState.getBoolean(IS_HIGH_SCORES);
+    } else if (getIntent().getExtras() != null 
+        && getIntent().getExtras().getBoolean(NEW_GAME)) {
       this.gameBoard = new GameBoard(this);
     } else if (getIntent().getExtras() != null 
         && getIntent().getExtras().getBoolean(HIGH_SCORES)) {
       isHighScores = true;
     }
     
+  }
+  
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    
+    outState.putBoolean(IS_HIGH_SCORES, isHighScores);
   }
   
   @Override
@@ -83,8 +93,8 @@ public class LightsOutPlay extends Activity {
       this.gameBoard = gameBoardSerializer.deserialize();
     }
     if (gameBoard.testWin()) {
-      updateMoveCount(gameBoard.getLevelMoves());
-      updateSeconds(gameBoard.getLevelSeconds());
+      updateMoveCount();
+      updateSeconds();
       levelWon();
     } else {
       this.gameBoard.startPlaying();
@@ -106,8 +116,8 @@ public class LightsOutPlay extends Activity {
    
     boardHolder.addView(gameBoardLayout);
     
-    updateMoveCount(gameBoard.getLevelMoves());
-    updateSeconds(gameBoard.getLevelSeconds());
+    updateMoveCount();
+    updateSeconds();
     
     for (int i = 0; i < size * size; i++) {
       GamePiece gamePiece = gameBoard.getGamePieceByIndex(i);
@@ -163,9 +173,9 @@ public class LightsOutPlay extends Activity {
   public void gameOver(String name) {
     showHighScores(
         highScoreManager.addTimeScore(name, 
-            gameBoard.getLevelSeconds(), gameBoard.getTotalMoves()),
+            gameBoard.getTotalSeconds(), gameBoard.getTotalMoves()),
         highScoreManager.addMovesScore(name, 
-            gameBoard.getLevelSeconds(), gameBoard.getTotalMoves()));
+            gameBoard.getTotalSeconds(), gameBoard.getTotalMoves()));
     gameBoardSerializer.serialize(null);
     this.gameBoard = null;
   }
@@ -201,7 +211,8 @@ public class LightsOutPlay extends Activity {
     if (isHighScores) {
       menu.add(R.string.reset_high_scores);
     } else {
-      menu.add(R.string.restart_level);
+      menu.add(Menu.NONE, MENU_HINT, Menu.NONE, R.string.hint);
+      menu.add(Menu.NONE, MENU_RESTART, Menu.NONE, R.string.restart_level);
     }
     
     return true;
@@ -213,7 +224,11 @@ public class LightsOutPlay extends Activity {
       this.highScoreManager.resetHighScores();
       showHighScores();
     } else {
-      this.gameBoard.restartLevel();
+      if (item.getItemId() == MENU_HINT) {
+        this.gameBoard.giveHint();
+      } else if (item.getItemId() == MENU_RESTART) {
+        this.gameBoard.restartLevel();
+      }
     }
     
     return super.onOptionsItemSelected(item);
@@ -258,12 +273,12 @@ public class LightsOutPlay extends Activity {
     }
   }
   
-  public void updateMoveCount(int moveCount) {
+  public void updateMoveCount() {
     TextView textView = (TextView) findViewById(R.id.moves_header);
     textView.setText(getString(R.string.moves) + ": " + this.gameBoard.getLevelMoves());
   }
   
-  public void updateSeconds(int seconds) {
+  public void updateSeconds() {
     TextView textView = (TextView) findViewById(R.id.time_header);
     textView.setText(getString(R.string.time) + ": " + this.gameBoard.getLevelSeconds());
   }
@@ -276,5 +291,13 @@ public class LightsOutPlay extends Activity {
       toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
       toast.show();
     }
+  }
+  
+  public void showHintPenaltyMessage() {
+    Toast toast = Toast.makeText(this, 
+        getString(R.string.hint_penalty), 
+        Toast.LENGTH_LONG);
+    toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+    toast.show();
   }
 }

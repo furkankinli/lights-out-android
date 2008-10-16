@@ -16,12 +16,13 @@ public class GameBoard {
   
   private int size, level;
   private int totalSeconds, totalMoves, levelSeconds, levelMoves,
-      levelSecondsOffset = 0;
+      levelSecondsOffset = 0, numHints;
 
   private boolean isTimerActive;
   
   private LinkedList<GamePiece> pieceList, originalPieceList;
   private HashMap<GamePiece, Integer> pieceToIndexMap;
+  private Set<Integer> solutionSet;
   private LightsOutPlay gamePlay;
   
   public HashMap<String, Bitmap> pieceBitmapMap; 
@@ -31,15 +32,17 @@ public class GameBoard {
   public GameBoard(LightsOutPlay gamePlay) {
     this.gamePlay = gamePlay;
     this.setProperties(new LinkedList<GamePiece>(), new LinkedList<GamePiece>(),
-        0, 0, 0, 0, 0, 0);
+        new HashSet<Integer>(), 0, 0, 0, 0, 0, 0, 0);
     pieceBitmapMap = new HashMap<String, Bitmap>();
   }
   
   public void setProperties(LinkedList<GamePiece> pieceList,
-      LinkedList<GamePiece> originalPieceList, int totalSeconds,
-      int totalMoves, int levelSeconds, int levelMoves, int size, int level) {
+      LinkedList<GamePiece> originalPieceList, Set<Integer> solutionSet,
+      int totalSeconds, int totalMoves, int levelSeconds, int levelMoves, 
+      int size, int level, int numHints) {
     this.setPieceList(pieceList);
     this.originalPieceList = originalPieceList;
+    this.solutionSet = solutionSet;
     this.totalSeconds = totalSeconds;
     this.totalMoves = totalMoves;
     this.levelSeconds = levelSeconds;
@@ -47,13 +50,16 @@ public class GameBoard {
     this.levelMoves = levelMoves;
     this.size = size;
     this.level = level;
+    this.numHints = numHints;
   }
   
   private void setPieceList(LinkedList<GamePiece> pieceList) {
     this.pieceList = pieceList;
     this.pieceToIndexMap = new HashMap<GamePiece, Integer>();
-    for (int i = 0; i < pieceList.size(); i++) {
-      this.pieceToIndexMap.put(pieceList.get(i), i);
+    if (pieceList != null) {
+      for (int i = 0; i < pieceList.size(); i++) {
+        this.pieceToIndexMap.put(pieceList.get(i), i);
+      }
     }
   }
   
@@ -101,6 +107,7 @@ public class GameBoard {
       Set<Integer> blockSet = getRandomPositions(size * size, numBlocks, null);
       Set<Integer> positionSet = getRandomPositions(size * size, minMoves,
           blockSet);
+      this.solutionSet = positionSet;
       
       for (int i : blockSet) {
         pieceList.get(i).enableBlock();
@@ -135,7 +142,6 @@ public class GameBoard {
         set.add(rand);
       }
     }
-    
     return set;
   }
   
@@ -174,14 +180,37 @@ public class GameBoard {
     isTimerActive = false;
   }
   
+  public void giveHint() {
+    if (this.numHints == 0) {
+      this.gamePlay.showHintPenaltyMessage();
+    }
+    this.numHints++;
+    
+    this.levelSecondsOffset += 10;
+    this.setLevelSeconds(this.levelSeconds + this.levelSecondsOffset);
+    this.setLevelMoves(this.levelMoves + 10);
+    
+    Object[] solutionArray = this.solutionSet.toArray();
+    int rand = new Random().nextInt(solutionArray.length);
+    GamePiece gamePiece = this.pieceList.get((Integer)solutionArray[rand]);
+    gamePiece.activateHint();
+  }
+  
   public void togglePiece(GamePiece gamePiece) {
     if (gamePiece.isBlock()) {
       return;
     }
+    int index = pieceToIndexMap.get(gamePiece);
+    if (this.solutionSet.contains(index)) {
+      this.solutionSet.remove(index);
+    } else {
+      this.solutionSet.add(index);
+    }
+    
     this.doTogglePiece(gamePiece);
     
     this.levelMoves++;
-    this.gamePlay.updateMoveCount(levelMoves);
+    this.gamePlay.updateMoveCount();
     
     if (testWin()) {
       stopTimer();
@@ -195,6 +224,7 @@ public class GameBoard {
   private void doTogglePiece(GamePiece gamePiece) {
     gamePiece.toggleLights();
     int index = pieceToIndexMap.get(gamePiece);
+    
     LinkedList<Integer> neighborIndeces = new LinkedList<Integer>();
     if (index % size != 0 && index > 0) {
       neighborIndeces.add(index - 1);
@@ -218,6 +248,7 @@ public class GameBoard {
     if (pieceList.size() == 0) {
       return false;
     }
+//    return solutionSet.isEmpty();
     for (GamePiece gamePiece : pieceList) {
       if (gamePiece.isLightOn()) {
         return false;
@@ -250,6 +281,10 @@ public class GameBoard {
     return level;
   }
   
+  public int getNumHints() {
+    return numHints;
+  }
+  
   public LinkedList<GamePiece> getPieceList() {
     return pieceList;
   }
@@ -257,9 +292,18 @@ public class GameBoard {
   public LinkedList<GamePiece> getOriginalPieceList() {
     return originalPieceList;
   }
+  
+  public Set<Integer> getSolutionSet() {
+    return solutionSet;
+  }
 
   public void setLevelSeconds(int seconds) {
     this.levelSeconds = seconds;
-    this.gamePlay.updateSeconds(seconds);
+    this.gamePlay.updateSeconds();
+  }
+  
+  public void setLevelMoves(int moves) {
+    this.levelMoves = moves;
+    this.gamePlay.updateMoveCount();
   }
 }

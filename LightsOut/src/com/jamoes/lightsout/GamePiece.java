@@ -7,6 +7,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.widget.Button;
@@ -17,6 +19,14 @@ public class GamePiece extends Button {
 
   private GameBoard gameBoard;
   private boolean isLightOn, isBlock;
+  private int extraPadding = 0;
+  
+  final Handler handler = new Handler();
+  final Runnable invalidateRunnable = new Runnable() {
+    public void run() {
+      invalidate();
+    }
+  };
   
   public GamePiece(Context context, GameBoard gameBoard) {
     this(context, gameBoard, false, false);
@@ -28,6 +38,8 @@ public class GamePiece extends Button {
     this.gameBoard = gameBoard;
     this.isLightOn = isLightOn;
     this.isBlock = isBlock;
+    
+    this.setFocusableInTouchMode(true);
   }
   
   @Override
@@ -44,13 +56,10 @@ public class GamePiece extends Button {
       drawImage(canvas, R.drawable.red_block, 0);
     }
 
-    if (isBlock) {
-      drawImage(canvas, R.drawable.block, PADDING);
-    } else if (isLightOn) {
-      drawImage(canvas, R.drawable.lights_on, PADDING);
-    } else {
-      drawImage(canvas, R.drawable.lights_off, PADDING);
-    }
+    int imageId = isBlock ? R.drawable.block : 
+      isLightOn ? R.drawable.lights_on : R.drawable.lights_off;
+    
+    drawImage(canvas, imageId, PADDING + extraPadding);
   }
   
   private void drawImage(Canvas canvas, int imageId, int padding) {
@@ -72,6 +81,7 @@ public class GamePiece extends Button {
   public boolean onTouchEvent(MotionEvent event) {
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
+        this.requestFocus();
         return true;
       case MotionEvent.ACTION_UP:
         this.gameBoard.togglePiece(this);
@@ -88,6 +98,22 @@ public class GamePiece extends Button {
       this.gameBoard.togglePiece(this);
     }
     return super.onKeyUp(keyCode, event);
+  }
+  
+  public void activateHint() {
+    this.requestFocus();
+    
+    new Thread(new Runnable() {
+      public void run() {
+        for (int i = 2; i > -3; i--) {
+          extraPadding = i * 5;
+          handler.post(invalidateRunnable);
+          SystemClock.sleep(100);
+        }
+        extraPadding = 0;
+        handler.post(invalidateRunnable);
+      }
+    }).start();
   }
   
   public void toggleLights() {

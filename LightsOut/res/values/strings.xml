@@ -28,6 +28,8 @@
     <string name="erase_game">Starting a new game will erase your current game.</string>
     <string name="ok_to_erase">Ok to erase?</string>
     <string name="restart_level">Restart level</string>
+    <string name="hint">Hint</string>
+    <string name="hint_penalty">Each hint costs 10 moves and 60 seconds</string>
     <string name="level_start_message">Turn all the lights out!</string>
     <string name="reset_high_scores">Reset high scores</string>
 </resources>
