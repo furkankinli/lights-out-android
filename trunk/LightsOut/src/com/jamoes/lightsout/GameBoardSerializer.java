@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class GameBoardSerializer {
   
@@ -31,8 +33,10 @@ public class GameBoardSerializer {
       buffer.append("levelMoves=" + gameBoard.getLevelMoves() + "\n");
       buffer.append("size=" + gameBoard.getSize() + "\n");
       buffer.append("level=" + gameBoard.getLevel() + "\n");
+      buffer.append("numHints=" + gameBoard.getNumHints() + "\n");
       buffer.append("pieceList=" + pieceListString + "\n");
       buffer.append("originalPieceList=" + originalPieceListSring + "\n");
+      buffer.append("solutionSet=" + getSetString(gameBoard.getSolutionSet()) + "\n");
     }
     
     try {
@@ -60,6 +64,19 @@ public class GameBoardSerializer {
     return pieceListStringBuffer.toString();
   }
   
+  private String getSetString(Set<Integer> set) {
+    StringBuffer buffer = new StringBuffer();
+    for (int i : set) {
+      buffer.append(i);
+      buffer.append(',');
+    }
+    if (buffer.length() > 0) {
+      buffer.deleteCharAt(buffer.length() - 1);
+    }
+    
+    return buffer.toString();
+  }
+  
   public GameBoard deserialize() {
     GameBoard gameBoard = new GameBoard(gamePlay);
     String fileContents;
@@ -81,9 +98,9 @@ public class GameBoardSerializer {
     
     String[] lineArray = fileContents.split("\n");
     int size = 5, level = 0, totalSeconds = 0, totalMoves = 0, 
-        levelSeconds = 0, levelMoves = 0;
+        levelSeconds = 0, levelMoves = 0, numHints = 0;
     LinkedList<GamePiece> pieceList = null, originalPieceList = null;
-    
+    Set<Integer> solutionSet = null;
     
     for (String line : lineArray) {
       String[] pair = line.split("=");
@@ -99,15 +116,20 @@ public class GameBoardSerializer {
         size = Integer.parseInt(pair[1]);
       } else if ("level".equals(pair[0])) {
         level = Integer.parseInt(pair[1]);
+      } else if ("numHints".equals(pair[0])) {
+        numHints = Integer.parseInt(pair[1]);
       } else if ("pieceList".equals(pair[0]) && pair[1].length() > 0) {
         pieceList = getPieceList(pair[1], gameBoard);
       } else if ("originalPieceList".equals(pair[0]) && pair[1].length() > 0) {
         originalPieceList = getPieceList(pair[1], gameBoard);
+      } else if ("solutionSet".equals(pair[0]) && pair[1].length() > 0) {
+        solutionSet = getSolutionSet(pair[1]);
       }
     }
     
-    gameBoard.setProperties(pieceList, originalPieceList, totalSeconds, totalMoves, 
-        levelSeconds, levelMoves, size, level);
+    gameBoard.setProperties(pieceList, originalPieceList, solutionSet, 
+        totalSeconds, totalMoves, levelSeconds, levelMoves, size, level,
+        numHints);
     
     return gameBoard;
   }
@@ -126,5 +148,15 @@ public class GameBoardSerializer {
     }
     
     return pieceList;
+  }
+  
+  private Set<Integer> getSolutionSet(String s) {
+    HashSet<Integer> set = new HashSet<Integer>();
+    String[] numbers = s.split(",");
+    for (String number : numbers) {
+      set.add(Integer.parseInt(number));
+    }
+    
+    return set;
   }
 }
