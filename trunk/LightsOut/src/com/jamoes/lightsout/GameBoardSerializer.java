@@ -100,10 +100,14 @@ public class GameBoardSerializer {
     int size = 5, level = 0, totalSeconds = 0, totalMoves = 0, 
         levelSeconds = 0, levelMoves = 0, numHints = 0;
     LinkedList<GamePiece> pieceList = null, originalPieceList = null;
-    Set<Integer> solutionSet = null;
+    Set<Integer> solutionSet = new HashSet<Integer>();
     
     for (String line : lineArray) {
       String[] pair = line.split("=");
+      if (pair.length != 2) { 
+        continue;
+      }
+      
       if ("totalSeconds".equals(pair[0])) {
         totalSeconds = Integer.parseInt(pair[1]);
       } else if ("totalMoves".equals(pair[0])) {

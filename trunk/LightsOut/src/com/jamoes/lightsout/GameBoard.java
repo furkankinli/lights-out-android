@@ -186,8 +186,8 @@ public class GameBoard {
     }
     this.numHints++;
     
-    this.levelSecondsOffset += 10;
-    this.setLevelSeconds(this.levelSeconds + this.levelSecondsOffset);
+    this.levelSecondsOffset += 30;
+    this.setLevelSeconds(this.levelSeconds);
     this.setLevelMoves(this.levelMoves + 10);
     
     Object[] solutionArray = this.solutionSet.toArray();
@@ -248,7 +248,6 @@ public class GameBoard {
     if (pieceList.size() == 0) {
       return false;
     }
-//    return solutionSet.isEmpty();
     for (GamePiece gamePiece : pieceList) {
       if (gamePiece.isLightOn()) {
         return false;
