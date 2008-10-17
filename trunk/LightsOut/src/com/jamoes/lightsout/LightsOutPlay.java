@@ -38,7 +38,7 @@ public class LightsOutPlay extends Activity {
   private HighScoreManager highScoreManager;
   private GameBoardSerializer gameBoardSerializer;
   private Dialog levelWonDialog;
-  private boolean isHighScores = false;
+  private boolean isHighScores = false, isNewGame = false;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +55,7 @@ public class LightsOutPlay extends Activity {
       this.isHighScores = savedInstanceState.getBoolean(IS_HIGH_SCORES);
     } else if (getIntent().getExtras() != null 
         && getIntent().getExtras().getBoolean(NEW_GAME)) {
-      this.gameBoard = new GameBoard(this);
+      this.isNewGame = true;
     } else if (getIntent().getExtras() != null 
         && getIntent().getExtras().getBoolean(HIGH_SCORES)) {
       isHighScores = true;
@@ -89,7 +89,10 @@ public class LightsOutPlay extends Activity {
       return;
     }
 
-    if (gameBoard == null) {
+    if (isNewGame) {
+      this.gameBoard = new GameBoard(this);
+      isNewGame = false;
+    } else {
       this.gameBoard = gameBoardSerializer.deserialize();
     }
     if (gameBoard.testWin()) {
