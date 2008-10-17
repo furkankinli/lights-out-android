@@ -37,7 +37,7 @@ public class LightsOutPlay extends Activity {
   private GameBoard gameBoard = null;
   private HighScoreManager highScoreManager;
   private GameBoardSerializer gameBoardSerializer;
-  private Dialog dialog;
+  private Dialog levelWonDialog;
   private boolean isHighScores = false;
   
   @Override
@@ -126,48 +126,52 @@ public class LightsOutPlay extends Activity {
   }
   
   public void levelWon() {
-    this.dialog = new Dialog(this);
-    dialog.setContentView(R.layout.win_dialog);
+    if (levelWonDialog != null && levelWonDialog.isShowing()) { 
+      return;
+    }
     
-    TextView levelTimeTextView = (TextView) dialog.findViewById(R.id.level_time_text);
-    TextView levelMovesTextView = (TextView) dialog.findViewById(R.id.level_moves_text);
-    TextView totalTimeTextView = (TextView) dialog.findViewById(R.id.total_time_text);
-    TextView totalMovesTextView = (TextView) dialog.findViewById(R.id.total_moves_text);
+    this.levelWonDialog = new Dialog(this);
+    levelWonDialog.setContentView(R.layout.win_dialog);
+    
+    TextView levelTimeTextView = (TextView) levelWonDialog.findViewById(R.id.level_time_text);
+    TextView levelMovesTextView = (TextView) levelWonDialog.findViewById(R.id.level_moves_text);
+    TextView totalTimeTextView = (TextView) levelWonDialog.findViewById(R.id.total_time_text);
+    TextView totalMovesTextView = (TextView) levelWonDialog.findViewById(R.id.total_moves_text);
     levelTimeTextView.setText(this.gameBoard.getLevelSeconds() + "");
     levelMovesTextView.setText(this.gameBoard.getLevelMoves() + "");
     totalTimeTextView.setText(this.gameBoard.getTotalSeconds() + "");
     totalMovesTextView.setText(this.gameBoard.getTotalMoves() + "");
     
-    Button button = (Button) dialog.findViewById(R.id.dialog_button);
+    Button button = (Button) levelWonDialog.findViewById(R.id.dialog_button);
     if (gameBoard.getLevel() < GameBoard.LAST_LEVEL) {
       button.setText(getString(R.string.next_level).replaceFirst("%n", (gameBoard.getLevel() + 2) + ""));
-      dialog.setTitle(getString(R.string.level_passed).replaceFirst("%n", (gameBoard.getLevel() + 1) +""));
+      levelWonDialog.setTitle(getString(R.string.level_passed).replaceFirst("%n", (gameBoard.getLevel() + 1) + ""));
     } else {
       button.setText(R.string.ok);
-      dialog.setTitle(R.string.game_over);
+      levelWonDialog.setTitle(R.string.game_over);
       if (highScoreManager.isHighScore(gameBoard.getTotalSeconds(), gameBoard.getTotalMoves())) {
-        View highScoreInput = dialog.findViewById(R.id.high_score_input);
+        View highScoreInput = levelWonDialog.findViewById(R.id.high_score_input);
         highScoreInput.setVisibility(View.VISIBLE);
       }
     }
     
     button.setOnClickListener(new OnClickListener() {
       public void onClick(View v) {
-        dialog.dismiss();
+        levelWonDialog.dismiss();
       }
     });
-    dialog.setOnDismissListener(new OnDismissListener() {
+    levelWonDialog.setOnDismissListener(new OnDismissListener() {
       public void onDismiss(DialogInterface dialogInterface) {
         if (gameBoard.getLevel() < GameBoard.LAST_LEVEL) {
           gameBoard.playNextLevel();
         } else {
-          EditText highScoreEditText = (EditText) dialog.findViewById(R.id.high_score_name);
+          EditText highScoreEditText = (EditText) levelWonDialog.findViewById(R.id.high_score_name);
           gameOver(highScoreEditText.getText().toString());
         }
       }
     });
     
-    dialog.show();
+    levelWonDialog.show();
   }
   
   public void gameOver(String name) {
