@@ -37,6 +37,7 @@ public class GameBoardSerializer {
       buffer.append("pieceList=" + pieceListString + "\n");
       buffer.append("originalPieceList=" + originalPieceListSring + "\n");
       buffer.append("solutionSet=" + getSetString(gameBoard.getSolutionSet()) + "\n");
+      buffer.append("originalSolutionSet=" + getSetString(gameBoard.getOriginalSolutionSet()) + "\n");
     }
     
     try {
@@ -100,7 +101,8 @@ public class GameBoardSerializer {
     int size = 5, level = 0, totalSeconds = 0, totalMoves = 0, 
         levelSeconds = 0, levelMoves = 0, numHints = 0;
     LinkedList<GamePiece> pieceList = null, originalPieceList = null;
-    Set<Integer> solutionSet = new HashSet<Integer>();
+    HashSet<Integer> solutionSet = new HashSet<Integer>(), 
+        originalSolutionSet = new HashSet<Integer>();
     
     for (String line : lineArray) {
       String[] pair = line.split("=");
@@ -128,12 +130,14 @@ public class GameBoardSerializer {
         originalPieceList = getPieceList(pair[1], gameBoard);
       } else if ("solutionSet".equals(pair[0]) && pair[1].length() > 0) {
         solutionSet = getSolutionSet(pair[1]);
+      } else if ("originalSolutionSet".equals(pair[0]) && pair[1].length() > 0) {
+        originalSolutionSet = getSolutionSet(pair[1]);
       }
     }
     
     gameBoard.setProperties(pieceList, originalPieceList, solutionSet, 
-        totalSeconds, totalMoves, levelSeconds, levelMoves, size, level,
-        numHints);
+        originalSolutionSet, totalSeconds, totalMoves, levelSeconds, levelMoves,
+        size, level, numHints);
     
     return gameBoard;
   }
@@ -154,7 +158,7 @@ public class GameBoardSerializer {
     return pieceList;
   }
   
-  private Set<Integer> getSolutionSet(String s) {
+  private HashSet<Integer> getSolutionSet(String s) {
     HashSet<Integer> set = new HashSet<Integer>();
     String[] numbers = s.split(",");
     for (String number : numbers) {

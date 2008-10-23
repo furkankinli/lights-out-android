@@ -22,7 +22,7 @@ public class GameBoard {
   
   private LinkedList<GamePiece> pieceList, originalPieceList;
   private HashMap<GamePiece, Integer> pieceToIndexMap;
-  private Set<Integer> solutionSet;
+  private HashSet<Integer> solutionSet, originalSolutionSet;
   private LightsOutPlay gamePlay;
   
   public HashMap<String, Bitmap> pieceBitmapMap; 
@@ -32,17 +32,19 @@ public class GameBoard {
   public GameBoard(LightsOutPlay gamePlay) {
     this.gamePlay = gamePlay;
     this.setProperties(new LinkedList<GamePiece>(), new LinkedList<GamePiece>(),
-        new HashSet<Integer>(), 0, 0, 0, 0, 0, 0, 0);
+        new HashSet<Integer>(), new HashSet<Integer>(), 0, 0, 0, 0, 0, 0, 0);
     pieceBitmapMap = new HashMap<String, Bitmap>();
   }
   
   public void setProperties(LinkedList<GamePiece> pieceList,
-      LinkedList<GamePiece> originalPieceList, Set<Integer> solutionSet,
+      LinkedList<GamePiece> originalPieceList, HashSet<Integer> solutionSet,
+      HashSet<Integer> originalSolutionSet,
       int totalSeconds, int totalMoves, int levelSeconds, int levelMoves, 
       int size, int level, int numHints) {
     this.setPieceList(pieceList);
     this.originalPieceList = originalPieceList;
     this.solutionSet = solutionSet;
+    this.originalSolutionSet = originalSolutionSet;
     this.totalSeconds = totalSeconds;
     this.totalMoves = totalMoves;
     this.levelSeconds = levelSeconds;
@@ -70,6 +72,11 @@ public class GameBoard {
     for (GamePiece gamePiece : pieceList) {
       originalPieceList.add(new GamePiece(gamePlay, this, 
           gamePiece.isLightOn(), gamePiece.isBlock()));
+    }
+    
+    solutionSet.clear();
+    for (int i : originalSolutionSet) {
+      solutionSet.add(i);
     }
     
     gamePlay.showLevelStartMessage(level);
@@ -104,10 +111,14 @@ public class GameBoard {
       }
       
       int minMoves = level + 3;
-      Set<Integer> blockSet = getRandomPositions(size * size, numBlocks, null);
-      Set<Integer> positionSet = getRandomPositions(size * size, minMoves,
+      HashSet<Integer> blockSet = getRandomPositions(size * size, numBlocks, null);
+      HashSet<Integer> positionSet = getRandomPositions(size * size, minMoves,
           blockSet);
       this.solutionSet = positionSet;
+      this.originalSolutionSet = new HashSet<Integer>();
+      for (int i : solutionSet) {
+        originalSolutionSet.add(i);
+      }
       
       for (int i : blockSet) {
         pieceList.get(i).enableBlock();
@@ -129,7 +140,7 @@ public class GameBoard {
     startTimer();
   }
   
-  private Set<Integer> getRandomPositions(int uppperLimit, int numPositions,
+  private HashSet<Integer> getRandomPositions(int uppperLimit, int numPositions,
       Set<Integer> blockSet) {
     int numBlocks = blockSet == null ? 0 : blockSet.size();
     assert(uppperLimit > numPositions + numBlocks);
@@ -294,6 +305,10 @@ public class GameBoard {
   
   public Set<Integer> getSolutionSet() {
     return solutionSet;
+  }
+  
+  public Set<Integer> getOriginalSolutionSet() {
+    return originalSolutionSet;
   }
 
   public void setLevelSeconds(int seconds) {
